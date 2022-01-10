@@ -1,47 +1,38 @@
-from bs4 import BeautifulSoup
-import requests
-import lxml
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
-from webdriver_manager.chrome import ChromeDriverManager
 import pandas as pd
-import streamlit as st
 import numpy as np
-from requests_html import HTMLSession
+import streamlit as st
+# from io import BytesIO
+# import os
+# import base64 
+import altair as alt
+import datetime as dt
+# from st_aggrid import AgGrid
+from st_aggrid import AgGrid, GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode, JsCode
 
+st.set_page_config(layout="wide")
 
+# results_excel=pd.read_excel('C:/Users/Darragh/Documents/Python/nrl/nrl.xlsx')
+# id_excel=pd.read_excel('C:/Users/Darragh/Documents/Python/nrl/nrl_id.xlsx')
 
+def csv_save(x):
+    x.to_csv('C:/Users/Darragh/Documents/Python/nrl/nrl_team_id.csv')
+    return x
+# csv_save(id_excel)
 
-# https://stackoverflow.com/questions/55351871/beautifulsoup-attributeerror-nonetype-object-has-no-attribute-text
-# https://github.com/njpowers7915/NRL-match-data/blob/master/scraping/2_stat_scraper_2018.ipynb
+@st.cache
+def read_csv_data(file):
+    return pd.read_csv(file)
 
-# st.write( [' + str(1') +'] )
+url = read_csv_data('https://raw.githubusercontent.com/ZeNoonan/nrl/main/nrl_data.csv').copy()
+# https://www.aussportsbetting.com/data/historical-nfl-results-and-odds-data/
+team_names_id = read_csv_data('https://raw.githubusercontent.com/ZeNoonan/nrl/main/nrl_team_id.csv').copy()
 
-# session = HTMLSession()
-# response = session.get('https://www.nrl.com/draw/nrl-premiership/2021/finals-week-3/rabbitohs-v-sea-eagles/')
-# soup = BeautifulSoup(response.content, 'html.parser')
-# title =  response.html.xpath(('//*[@id="player-stats"]/div[2]/div/div[3]/div/table/tbody/tr[2]/td[2]/a'))
+data=pd.read_csv(url,parse_dates=['Date'])
 
+# data['Date']=pd.to_datetime(data['Date'],errors='coerce')
+data['year']=data['Date'].dt.year
+data['month']=data['Date'].dt.month
+data['day']=data['Date'].dt.day
+data=data.drop(['Date'],axis=1)
+data['Date']=pd.to_datetime(data[['year','month','day']])
 
-# driver = webdriver.Chrome(ChromeDriverManager().install())
-# name_field = driver.find_element_by_xpath(('//*[@id="player-stats"]/div[2]/div/div[3]/div/table/tbody/tr[1]/td[2]/a')).get_attribute('innerText').strip()
-# st.write(name_field)
-# st.write(title)
-
-# tomorrow_weather = soup.find(id="tabs-match-centre-")
-# st.write(tomorrow_weather)
-
-
-
-# URL = "https://www.nrl.com/draw/nrl-premiership/2021/finals-week-3/rabbitohs-v-sea-eagles/"
-# # URL = "https://realpython.github.io/fake-jobs/"
-# page = requests.get(URL)
-# soup = BeautifulSoup(page.content, "html.parser")
-# # results = soup.find(id="ResultsContainer")
-# results = soup.find(id="tabs-match-centre-")
-
-# # st.write(page.text)
-# st.write(results.prettify())

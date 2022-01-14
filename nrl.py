@@ -126,7 +126,7 @@ def penalty_cover_3(data,column_sign,name):
     return data
 
 turnover=spread_workings(data)
-st.write('turnover workings', turnover)
+# st.write('turnover workings', turnover)
 turnover_1 = turnover_workings(turnover,-1)
 turnover_2=turnover_2(turnover_1)
 turnover_3=season_cover_3(turnover_2,'turnover_sign','prev_turnover')
@@ -220,3 +220,121 @@ test_df_2=pd.concat([test_df_home,test_df_away],ignore_index=True)
 test_df_2=test_df_2.sort_values(by=['ID','Week'],ascending=True)
 test_df_2['spread_with_home_adv']=test_df_2['spread']+test_df_2['home_pts_adv']
 # st.write(test_df_2)
+
+def test_4(matrix_df_1):
+    weights = np.array([0.125, 0.25,0.5,1])
+    sum_weights = np.sum(weights)
+    matrix_df_1['adj_spread']=matrix_df_1['spread_with_home_adv'].rolling(window=4, center=False).apply(lambda x: np.sum(weights*x), raw=False)
+    return matrix_df_1
+
+# with st.beta_expander('CORRECT Power Ranking to be used in Matrix Multiplication'):
+    # # https://stackoverflow.com/questions/9621362/how-do-i-compute-a-weighted-moving-average-using-pandas
+grouped = test_df_2.groupby('ID')
+# https://stackoverflow.com/questions/16974047/efficient-way-to-find-missing-elements-in-an-integer-sequence
+# https://stackoverflow.com/questions/62471485/is-it-possible-to-insert-missing-sequence-numbers-in-python
+ranking_power=[]
+for name, group in grouped:
+    dfseq = pd.DataFrame.from_dict({'Week': range( -3,21 )}).merge(group, on='Week', how='outer').fillna(np.NaN)
+    dfseq['ID']=dfseq['ID'].fillna(method='ffill')
+    dfseq['home_pts_adv']=dfseq['home_pts_adv'].fillna(0)
+    dfseq['spread']=dfseq['spread'].fillna(0)
+    dfseq['spread_with_home_adv']=dfseq['spread_with_home_adv'].fillna(0)
+    dfseq['home']=dfseq['home'].fillna(0)
+    df_seq_1 = dfseq.groupby(['Week','ID'])['spread_with_home_adv'].sum().reset_index()
+    update=test_4(df_seq_1)
+    ranking_power.append(update)
+
+    df_power = pd.concat(ranking_power, ignore_index=True)
+    # st.write('power ranking',df_power.sort_values(by=['ID','Week'],ascending=[True,True]))
+    # st.write('power ranking',df_power.sort_values(by=['Week','ID'],ascending=[True,True]))
+
+# with st.beta_expander('CORRECT Power Ranking Matrix Multiplication'):
+# https://stackoverflow.com/questions/62775018/matrix-array-multiplication-whats-excel-doing-mmult-and-how-to-mimic-it-in#62775508
+inverse_matrix=[]
+power_ranking=[]
+list_inverse_matrix=[]
+list_power_ranking=[]
+power_df=df_power.loc[:,['Week','ID','adj_spread']].copy()
+games_df=matrix_df_1.copy()
+first=list(range(-3,18))
+last=list(range(0,21))
+for first,last in zip(first,last):
+    first_section=games_df[games_df['Week'].between(first,last)]
+    full_game_matrix=games_matrix_workings(first_section)
+    adjusted_matrix=full_game_matrix.loc[0:14,0:14]
+    df_inv = pd.DataFrame(np.linalg.pinv(adjusted_matrix.values), adjusted_matrix.columns, adjusted_matrix.index)
+    power_df_week=power_df[power_df['Week']==last].drop_duplicates(subset=['ID'],keep='last').set_index('ID')\
+    .drop('Week',axis=1).rename(columns={'adj_spread':0}).loc[:14,:]
+    result = df_inv.dot(pd.DataFrame(power_df_week))
+    result.columns=['power']
+    avg=(result['power'].sum())/16
+    result['avg_pwr_rank']=(result['power'].sum())/16
+    result['final_power']=result['avg_pwr_rank']-result['power']
+    df_pwr=pd.DataFrame(columns=['final_power'],data=[avg])
+    result=pd.concat([result,df_pwr],ignore_index=True)
+    result['week']=last+1
+    power_ranking.append(result)
+
+    power_ranking_combined = pd.concat(power_ranking).reset_index().rename(columns={'index':'ID'})
+    # st.write('power ranking combined', power_ranking_combined)
+
+# with st.beta_expander('Adding Power Ranking to Matches'):
+matches_df = spread.copy()
+home_power_rank_merge=power_ranking_combined.loc[:,['ID','week','final_power']].copy().rename(columns={'week':'Week','ID':'Home ID'})
+away_power_rank_merge=power_ranking_combined.loc[:,['ID','week','final_power']].copy().rename(columns={'week':'Week','ID':'Away ID'})
+updated_df=pd.merge(matches_df,home_power_rank_merge,on=['Home ID','Week']).rename(columns={'final_power':'home_power'})
+updated_df=pd.merge(updated_df,away_power_rank_merge,on=['Away ID','Week']).rename(columns={'final_power':'away_power'})
+updated_df['calculated_spread']=updated_df['away_power']-updated_df['home_power']
+updated_df['spread_working']=updated_df['home_power']-updated_df['away_power']+updated_df['Spread']
+updated_df['power_pick'] = np.where(updated_df['spread_working'] > 0, 1,
+np.where(updated_df['spread_working'] < 0,-1,0))
+# st.write(updated_df)
+
+with st.expander('Season to Date Cover Factor by Team'):
+    st.write('Positive number means the number of games to date that you have covered the spread; in other words teams with a positive number have beaten expectations')
+    st.write('Negative number means the number of games to date that you have not covered the spread; in other words teams with a negative number have performed below expectations')
+    st.write('blanks in graph are where the team got a bye week')
+    stdc_home=spread_3.rename(columns={'ID':'Home ID'})
+    stdc_home['cover_sign']=-stdc_home['cover_sign']
+    stdc_away=spread_3.rename(columns={'ID':'Away ID'})
+    updated_df=updated_df.drop(['away_cover'],axis=1)
+    updated_df=updated_df.rename(columns={'home_cover':'home_cover_result'})
+    updated_df=updated_df.merge(stdc_home,on=['Date','Week','Home ID'],how='left').rename(columns={'cover':'home_cover','cover_sign':'home_cover_sign'})
+    updated_df=pd.merge(updated_df,stdc_away,on=['Date','Week','Away ID'],how='left').rename(columns={'cover':'away_cover','cover_sign':'away_cover_sign'})
+    stdc_df=pd.merge(spread_3,team_names_id,on='ID').rename(columns={'Home Team':'Team'})
+    stdc_df=stdc_df.loc[:,['Week','Team','cover']].copy()
+    stdc_df['average']=stdc_df.groupby('Team')['cover'].transform(np.mean)
+    # st.write(stdc_df.sort_values(by=['Team','Week']))
+    stdc_pivot=pd.pivot_table(stdc_df,index='Team', columns='Week')
+    stdc_pivot.columns = stdc_pivot.columns.droplevel(0)
+    chart_cover= alt.Chart(stdc_df).mark_rect().encode(alt.X('Week:O',axis=alt.Axis(title='Week',labelAngle=0)),
+    alt.Y('Team',sort=alt.SortField(field='average', order='descending')),color=alt.Color('cover:Q',scale=alt.Scale(scheme='redyellowgreen')))
+    # https://altair-viz.github.io/gallery/layered_heatmap_text.html
+    # https://vega.github.io/vega/docs/schemes/
+    text_cover=chart_cover.mark_text().encode(text=alt.Text('cover:N'),color=alt.value('black'))
+    st.altair_chart(chart_cover + text_cover,use_container_width=True)
+
+with st.expander('Turnover Factor by Match Graph'):
+    st.write('-1 means you received more turnovers than other team, 1 means you gave up more turnovers to other team')
+    # st.write('this is turnovers', turnover_3)
+    turnover_matches = turnover_3.loc[:,['Date','Week','ID','prev_turnover', 'turnover_sign']].copy()
+    turnover_home=turnover_matches.rename(columns={'ID':'Home ID'})
+    turnover_away=turnover_matches.rename(columns={'ID':'Away ID'})
+    turnover_away['turnover_sign']=-turnover_away['turnover_sign']
+    updated_df=pd.merge(updated_df,turnover_home,on=['Date','Week','Home ID'],how='left').rename(columns={'prev_turnover':'home_prev_turnover','turnover_sign':'home_turnover_sign'})
+    updated_df=pd.merge(updated_df,turnover_away,on=['Date','Week','Away ID'],how='left').rename(columns={'prev_turnover':'away_prev_turnover','turnover_sign':'away_turnover_sign'})
+
+    df_stdc_1=pd.merge(turnover_matches,team_names_id,on='ID').rename(columns={'Home Team':'Team'})
+    # st.write(df_stdc_1)
+    df_stdc_1['average']=df_stdc_1.groupby('Team')['turnover_sign'].transform(np.mean)
+
+    color_scale = alt.Scale(domain=[1,0,-1],range=["red", "lightgrey","LimeGreen"])
+
+    chart_cover= alt.Chart(df_stdc_1).mark_rect().encode(alt.X('Week:O',axis=alt.Axis(title='Week',labelAngle=0)),
+    # alt.Y('Team',sort=alt.SortField(field='average', order='ascending')),color=alt.Color('turnover_sign:Q',scale=alt.Scale(scheme='redyellowgreen')))
+    alt.Y('Team',sort=alt.SortField(field='average', order='ascending')),color=alt.Color('turnover_sign:Q',scale=color_scale))
+    # https://altair-viz.github.io/gallery/layered_heatmap_text.html
+    # https://vega.github.io/vega/docs/schemes/
+    
+    text_cover=chart_cover.mark_text().encode(text=alt.Text('turnover_sign:N'),color=alt.value('black'))
+    st.altair_chart(chart_cover + text_cover,use_container_width=True)

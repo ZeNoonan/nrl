@@ -118,9 +118,18 @@ def penalty_workings(data,week_start):
 
 def penalty_2(season_cover_df):    
     # https://stackoverflow.com/questions/53335567/use-pandas-shift-within-a-group
+    # st.write('before line in function', season_cover_df)
     season_cover_df['prev_penalty']=season_cover_df.groupby('ID')['penalty_sign'].shift()
-    return season_cover_df.sort_values(by=['ID','Week'],ascending=True)
-    # return season_cover_df
+    # st.write('after line in function', season_cover_df)
+    season_cover_df = season_cover_df.sort_values(by=['ID','Week'],ascending=True)
+    # st.write('last check in function', season_cover_df)
+    x = season_cover_df
+    return x
+
+def clean_version_of_above_which_works(x):
+    # don't know why this version works and above doesn't
+    x['prev_penalty']=x.groupby('ID')['penalty_sign'].shift()
+    return x.sort_values(by=['ID','Week'],ascending=[True,True])
 
 def penalty_cover_3(data,column_sign,name):
     data[column_sign] = np.where((data[name] > 0), 1, np.where((data[name] < 0),-1,0))
@@ -140,9 +149,22 @@ penalty_3=penalty_cover_3(penalty_2,'penalty_sign','prev_penalty')
 
 intercept=spread_workings(data).drop(['penalties_conceded'],axis=1).rename(columns={'intercepts':'penalties_conceded'})
 # st.write('where is penalty??', intercept)
-intercept_1 = penalty_workings(intercept,-1)
-# st.write('??', intercept_1)
-intercept_2=penalty_2(intercept_1)
+intercept_1 = pd.DataFrame(penalty_workings(intercept,-1))
+# intercept_1['Week'] = intercept_1['Week'].astype('int')
+# intercept_1['ID'] = intercept_1['ID'].astype('int')
+# intercept_1['penalty_sign'] = intercept_1['penalty_sign'].astype('int')
+# intercept_1['year']=intercept_1['Date'].dt.year
+# intercept_1['month']=intercept_1['Date'].dt.month
+# intercept_1['day']=intercept_1['Date'].dt.day
+# intercept_1=intercept_1.drop(['Date'],axis=1)
+# intercept_1['Date']=pd.to_datetime(intercept_1[['year','month','day']])
+# intercept_1=intercept_1.reset_index()
+# st.write('?? what is the problem here', intercept_1)
+# st.write(intercept_1.dtypes)
+# chart_data = pd.DataFrame(np.random.randn(20, 4),columns=['Week', 'ID', 'penalty_sign','Date'])
+# test_2=clean_version_of_above_which_works(chart_data)
+# st.write(test_2)
+intercept_2=clean_version_of_above_which_works(intercept_1)
 intercept_3=penalty_cover_3(intercept_2,'penalty_sign','prev_penalty')
 
 

@@ -28,6 +28,9 @@ def read_csv_data(file):
 def read_csv_data_date(file):
     return pd.read_csv(file,parse_dates=['Date'])
 
+
+
+
 # url = read_csv_data('https://raw.githubusercontent.com/ZeNoonan/nrl/main/nrl_data.csv').copy()
 url = 'https://raw.githubusercontent.com/ZeNoonan/nrl/main/nrl_data.csv'
 # https://www.aussportsbetting.com/data/historical-nfl-results-and-odds-data/
@@ -142,30 +145,23 @@ turnover_2=turnover_2(turnover_1)
 turnover_3=season_cover_3(turnover_2,'turnover_sign','prev_turnover')
 
 penalty=spread_workings(data)
-# st.write('where is penalty??', penalty)
+st.write('SPREAD WORKINGS where is penalty??', penalty)
 penalty_1 = penalty_workings(penalty,-1)
 penalty_2=penalty_2(penalty_1)
 penalty_3=penalty_cover_3(penalty_2,'penalty_sign','prev_penalty')
 
+# intercept_0=spread_workings(data)
+# intercept_0['intercepts']=intercept_0['home_intercepts']
 intercept=spread_workings(data).drop(['penalties_conceded'],axis=1).rename(columns={'intercepts':'penalties_conceded'})
-# st.write('where is penalty??', intercept)
+# st.write(intercept)
 intercept_1 = pd.DataFrame(penalty_workings(intercept,-1))
-# intercept_1['Week'] = intercept_1['Week'].astype('int')
-# intercept_1['ID'] = intercept_1['ID'].astype('int')
-# intercept_1['penalty_sign'] = intercept_1['penalty_sign'].astype('int')
-# intercept_1['year']=intercept_1['Date'].dt.year
-# intercept_1['month']=intercept_1['Date'].dt.month
-# intercept_1['day']=intercept_1['Date'].dt.day
-# intercept_1=intercept_1.drop(['Date'],axis=1)
-# intercept_1['Date']=pd.to_datetime(intercept_1[['year','month','day']])
-# intercept_1=intercept_1.reset_index()
-# st.write('?? what is the problem here', intercept_1)
-# st.write(intercept_1.dtypes)
-# chart_data = pd.DataFrame(np.random.randn(20, 4),columns=['Week', 'ID', 'penalty_sign','Date'])
-# test_2=clean_version_of_above_which_works(chart_data)
-# st.write(test_2)
 intercept_2=clean_version_of_above_which_works(intercept_1)
 intercept_3=penalty_cover_3(intercept_2,'penalty_sign','prev_penalty')
+
+sin_bin=spread_workings(data).drop(['penalties_conceded'],axis=1).rename(columns={'sin_bin':'penalties_conceded'})
+sin_bin_1 = pd.DataFrame(penalty_workings(sin_bin,-1))
+sin_bin_2=clean_version_of_above_which_works(sin_bin_1)
+sin_bin_3=penalty_cover_3(sin_bin_2,'penalty_sign','prev_penalty')
 
 
 def season_cover_workings(data,home,away,name,week_start):
@@ -319,6 +315,7 @@ updated_df['calculated_spread']=updated_df['away_power']-updated_df['home_power'
 updated_df['spread_working']=updated_df['home_power']-updated_df['away_power']+updated_df['Spread']
 updated_df['power_pick'] = np.where(updated_df['spread_working'] > 0, 1,
 np.where(updated_df['spread_working'] < 0,-1,0))
+# updated_df_1=updated_df.copy()
 # st.write(updated_df)
 
 with st.expander('Season to Date Cover Factor by Team'):
@@ -332,6 +329,8 @@ with st.expander('Season to Date Cover Factor by Team'):
     updated_df=updated_df.rename(columns={'home_cover':'home_cover_result'})
     updated_df=updated_df.merge(stdc_home,on=['Date','Week','Home ID'],how='left').rename(columns={'cover':'home_cover','cover_sign':'home_cover_sign'})
     updated_df=pd.merge(updated_df,stdc_away,on=['Date','Week','Away ID'],how='left').rename(columns={'cover':'away_cover','cover_sign':'away_cover_sign'})
+    updated_df_1=updated_df.copy()
+    
     stdc_df=pd.merge(spread_3,team_names_id,on='ID').rename(columns={'Home Team':'Team'})
     stdc_df=stdc_df.loc[:,['Week','Team','cover']].copy()
     stdc_df['average']=stdc_df.groupby('Team')['cover'].transform(np.mean)
@@ -347,13 +346,45 @@ with st.expander('Season to Date Cover Factor by Team'):
 
 with st.expander('Turnover Factor by Match Graph'):
     st.write('-1 means you received more turnovers than other team, 1 means you gave up more turnovers to other team')
-    # st.write('this is turnovers', turnover_3)
-    turnover_matches = turnover_3.loc[:,['Date','Week','ID','prev_turnover', 'turnover_sign']].copy()
-    turnover_home=turnover_matches.rename(columns={'ID':'Home ID'})
-    turnover_away=turnover_matches.rename(columns={'ID':'Away ID'})
-    turnover_away['turnover_sign']=-turnover_away['turnover_sign']
-    updated_df=pd.merge(updated_df,turnover_home,on=['Date','Week','Home ID'],how='left').rename(columns={'prev_turnover':'home_prev_turnover','turnover_sign':'home_turnover_sign'})
-    updated_df=pd.merge(updated_df,turnover_away,on=['Date','Week','Away ID'],how='left').rename(columns={'prev_turnover':'away_prev_turnover','turnover_sign':'away_turnover_sign'})
+
+    intercept_3=intercept_3.rename(columns={'penalty_sign':'turnover_sign', 'prev_penalty':'prev_turnover'})
+    sin_bin_3=sin_bin_3.rename(columns={'penalty_sign':'turnover_sign', 'prev_penalty':'prev_turnover'})
+
+    def turnover_data_prep_1(turnover_3):
+        return turnover_3.loc[:,['Date','Week','ID','prev_turnover', 'turnover_sign']].copy()
+
+    turnover_matches = turnover_data_prep_1(turnover_3)
+    intercept_matches = turnover_data_prep_1(intercept_3)
+    sin_bin_matches = turnover_data_prep_1(sin_bin_3)
+    # st.write('turnover matches',turnover_matches)
+    
+    # st.write(turnover_matches['Date'].dtypes)
+    # st.write(turnover_matches['ID'].dtypes)
+    # st.write(turnover_matches['Week'].dtypes)
+    # st.write(turnover_matches['prev_turnover'].dtypes)
+    # st.write(turnover_matches['turnover_sign'].dtypes)
+    # st.write('intercept matches',intercept_matches)
+
+    # st.write(intercept_matches['Date'].dtypes)
+    # st.write(intercept_matches['ID'].dtypes)
+    # st.write(intercept_matches['Week'].dtypes)
+    # st.write(intercept_matches['prev_turnover'].dtypes)
+    # st.write(intercept_matches['turnover_sign'].dtypes)
+
+
+    def turnover_data_prep_2(turnover_matches,updated_df):
+        turnover_home=turnover_matches.rename(columns={'ID':'Home ID'})
+        turnover_away=turnover_matches.rename(columns={'ID':'Away ID'})
+        turnover_away['turnover_sign']=-turnover_away['turnover_sign']
+        updated_df=pd.merge(updated_df,turnover_home,on=['Date','Week','Home ID'],how='left').rename(columns={'prev_turnover':'home_prev_turnover','turnover_sign':'home_turnover_sign'})
+        updated_df=pd.merge(updated_df,turnover_away,on=['Date','Week','Away ID'],how='left').rename(columns={'prev_turnover':'away_prev_turnover','turnover_sign':'away_turnover_sign'})
+        return updated_df
+
+    updated_df = turnover_data_prep_2(turnover_matches, updated_df)
+    updated_df_intercept = turnover_data_prep_2(intercept_matches, updated_df_1)
+    updated_df_sin_bin = turnover_data_prep_2(sin_bin_matches, updated_df_1)
+    # st.write(updated_df_intercept)
+    # st.write(updated_df_intercept.dtypes)
 
     df_stdc_1=pd.merge(turnover_matches,team_names_id,on='ID').rename(columns={'Home Team':'Team'})
     # st.write(df_stdc_1)
@@ -431,6 +462,8 @@ with st.expander('Betting Slip Matches'):
     # st.write(betting_matches.dtypes)
     # st.write(betting_matches)
     betting_matches_penalty=run_analysis(penalty_df)
+    betting_matches_intercept=run_analysis(updated_df_intercept)
+    betting_matches_sin_bin=run_analysis(updated_df_sin_bin)
     betting_matches=run_analysis(updated_df)
     presentation_betting_matches=betting_matches.copy()
 
@@ -614,6 +647,8 @@ with st.expander('Analysis of Factors'):
 
     analysis_factors=run_data(betting_matches)
     analysis_factors_penalty=run_data(betting_matches_penalty)
+    analysis_factors_intercept=run_data(betting_matches_intercept)
+    analysis_factors_sin_bin=run_data(betting_matches_sin_bin)
 
     # st.write('check for penalties', analysis_factors)
     def analysis_factor_function(analysis_factors,option_1='home_turnover_sign',option_2='away_turnover_sign'):
@@ -655,6 +690,8 @@ with st.expander('Analysis of Factors'):
         return df_table_1
     total_factor_table = analysis_factor_function(analysis_factors)
     total_factor_table_penalty = analysis_factor_function(analysis_factors_penalty)
+    total_factor_table_intercept = analysis_factor_function(analysis_factors_intercept)
+    total_factor_table_sin_bin = analysis_factor_function(analysis_factors_sin_bin)
 
     
     
@@ -669,19 +706,27 @@ with st.expander('Analysis of Factors'):
 
     total_factor_table_presentation=clean_presentation_table(total_factor_table)
     total_factor_table_presentation_penalty=clean_presentation_table(total_factor_table_penalty)
+    total_factor_table_presentation_intercept=clean_presentation_table(total_factor_table_intercept)
+    total_factor_table_presentation_sin_bin=clean_presentation_table(total_factor_table_sin_bin)
     columns_1,columns_2=st.columns(2)
-    
+    columns_3,columns_4=st.columns(2)
 
     def betting_df(analysis_factors):
         return analysis_factors[analysis_factors['bet_sign']!=0]
 
     factor_bets=betting_df(analysis_factors)
     factor_bets_penalty=betting_df(analysis_factors_penalty)
+    factor_bets_intercept=betting_df(analysis_factors_intercept)
+    factor_bets_sin_bin=betting_df(analysis_factors_sin_bin)
     # factor_bets = (analysis_factors[analysis_factors['bet_sign']!=0]).copy()
     bets_made_factor_table = analysis_factor_function(factor_bets)
     bets_made_factor_table_presentation=clean_presentation_table(bets_made_factor_table)
     bets_made_factor_table_penalty = analysis_factor_function(factor_bets_penalty)
+    bets_made_factor_table_intercept = analysis_factor_function(factor_bets_intercept)
+    bets_made_factor_table_sin_bin = analysis_factor_function(factor_bets_sin_bin)
     bets_made_factor_table_presentation_penalty=clean_presentation_table(bets_made_factor_table_penalty)
+    bets_made_factor_table_presentation_intercept=clean_presentation_table(bets_made_factor_table_intercept)
+    bets_made_factor_table_presentation_sin_bin=clean_presentation_table(bets_made_factor_table_sin_bin)
 
     with columns_1:
         st.subheader('This represents the Error factor')
@@ -696,6 +741,20 @@ with st.expander('Analysis of Factors'):
         st.write(total_factor_table_presentation_penalty)
         st.write('This is the number of bets made broken down by Factor result')
         st.write(bets_made_factor_table_presentation_penalty)
+
+    with columns_3:
+        st.subheader('This represents the Intercept factor')
+        st.write('This is the total number of matches broken down by Factor result')
+        st.write(total_factor_table_presentation_intercept)
+        st.write('This is the number of bets made broken down by Factor result')
+        st.write(bets_made_factor_table_presentation_intercept)
+
+    with columns_4:
+        st.subheader('This represents the sin_bin factor')
+        st.write('This is the total number of matches broken down by Factor result')
+        st.write(total_factor_table_presentation_sin_bin)
+        st.write('This is the number of bets made broken down by Factor result')
+        st.write(bets_made_factor_table_presentation_sin_bin)
 
     graph_factor_table = total_factor_table.copy().loc[['-1','0','1'],:].reset_index().rename(columns={'index':'result_all'})
     graph_factor_table['result_all']=graph_factor_table['result_all'].replace({'0':'tie','1':'win','-1':'lose'})

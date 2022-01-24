@@ -145,7 +145,7 @@ turnover_2=turnover_2(turnover_1)
 turnover_3=season_cover_3(turnover_2,'turnover_sign','prev_turnover')
 
 penalty=spread_workings(data)
-st.write('SPREAD WORKINGS where is penalty??', penalty)
+# st.write('SPREAD WORKINGS where is penalty??', penalty)
 penalty_1 = penalty_workings(penalty,-1)
 penalty_2=penalty_2(penalty_1)
 penalty_3=penalty_cover_3(penalty_2,'penalty_sign','prev_penalty')
@@ -572,72 +572,7 @@ with st.expander('Power Ranking by Week'):
     st.altair_chart(chart_power + text,use_container_width=True)
     # https://github.com/altair-viz/altair/issues/820#issuecomment-386856394
 
-with st.expander('Analysis of Betting Results across 1 to 5 factors'):
-    # matches_in_regular_season= (32 * 16) / 2
-    # st.write('In 2020 there were 13 matches in playoffs looks like this was new so 269 total matches in 2020 season compared with 267 in previous seasons')
-    # matches_in_playoffs = 13
-    # total_matches =matches_in_regular_season + matches_in_playoffs
-    # st.write('total_matches per my calculation',total_matches)
-    analysis=betting_matches.copy()
-    # totals = analysis.groupby('total_factor').agg(winning=('result_all','count'))
-    # totals_1=analysis.groupby([analysis['total_factor'].abs(),'result_all']).agg(winning=('result_all','count')).reset_index()
-    # totals_1['result_all']=totals_1['result_all'].replace({0:'tie',1:'win',-1:'lose'})
 
-    # st.write('shows the number of games at each factor level')
-    # st.write(totals.rename(columns={'winning':'number_of_games'}))
-    # st.write('sum of each factor level should correspond to table above',totals_1)
-    # st.write('sum of winning column should be 267 I think',totals_1['winning'].sum())
-    # st.write('count of week column should be 267',analysis['Week'].count())
-
-    analysis=analysis[analysis['Week']<finished_week+1]
-    # st.write('analysis',analysis)
-    totals = analysis.groupby('total_factor').agg(winning=('result_all','count'))
-    totals_graph=totals.reset_index().rename(columns={'winning':'number_of_games'})
-
-    # st.write('totals grpah', totals_graph)
-    chart_power= alt.Chart(totals_graph).mark_bar().encode(alt.X('total_factor:O',axis=alt.Axis(title='total_factor_per_match',labelAngle=0)),
-    alt.Y('number_of_games'))
-    text=chart_power.mark_text(dy=-7).encode(text=alt.Text('number_of_games:N',format=",.0f"),color=alt.value('black'))
-    st.altair_chart(chart_power + text,use_container_width=True)
-    
-    totals_1=analysis.groupby([analysis['total_factor'].abs(),'result_all']).agg(winning=('result_all','count')).reset_index()
-    totals_1['result_all']=totals_1['result_all'].replace({0:'tie',1:'win',-1:'lose'})
-    # st.write('checking graph data',totals_1.dtypes)
-    # totals_1['total_factor']=totals_1['total_factor'].astype(str)
-    # st.write('checking graph data',totals_1.dtypes)
-    # st.write('checking graph data',totals_1)
-    # https://www.quackit.com/css/css_color_codes.cfm
-    color_scale = alt.Scale(
-    domain=[
-        "lose",
-        "tie",
-        "win"],
-        range=["red", "lightgrey","LimeGreen"])
-    chart_power= alt.Chart(totals_1).mark_bar().encode(alt.X('total_factor:O',axis=alt.Axis(title='factor',labelAngle=0)),
-    alt.Y('winning'),color=alt.Color('result_all',scale=color_scale))
-    # st.altair_chart(chart_power,use_container_width=True)
-
-    
-    normalized_table = (totals_1[totals_1['result_all']!='tie']).copy()
-    # st.write('graph date to be cleaned',totals_1)
-    chart_power= alt.Chart(normalized_table).mark_bar().encode(alt.X('total_factor:O',axis=alt.Axis(title='factor',labelAngle=0)),
-    alt.Y('winning',stack="normalize"),color=alt.Color('result_all',scale=color_scale))
-    overlay = pd.DataFrame({'winning': [0.5]})
-    vline = alt.Chart(overlay).mark_rule(color='black', strokeWidth=2).encode(y='winning:Q')
-    text = alt.Chart(normalized_table).mark_text(dx=-1, dy=+60, color='white').encode(
-    x=alt.X('total_factor:O'),
-    y=alt.Y('winning',stack="normalize"),
-    detail='winning',
-    text=alt.Text('winning:Q', format='.0f'))
-    updated_test_chart=chart_power+vline+text
-    
-    st.altair_chart(updated_test_chart,use_container_width=True)
-
-    # st.write('shows the number of games at each factor level')
-    # st.write(totals.rename(columns={'winning':'number_of_games'}))
-    # st.write('sum of each factor level should correspond to table above',totals_1)
-    # st.write('sum of winning column should be 267 I think',totals_1['winning'].sum())
-    # st.write('count of week column should be 267',analysis['Week'].count())
 
 with st.expander('Analysis of Factors'):
     def run_data(betting_matches):
@@ -789,28 +724,132 @@ with st.expander('Analysis of Factors'):
     
     st.altair_chart(updated_test_chart,use_container_width=True)
 
+with st.expander('Analysis of Betting Results across 1 to 5 factors'):
+    # matches_in_regular_season= (32 * 16) / 2
+    # st.write('In 2020 there were 13 matches in playoffs looks like this was new so 269 total matches in 2020 season compared with 267 in previous seasons')
+    # matches_in_playoffs = 13
+    # total_matches =matches_in_regular_season + matches_in_playoffs
+    # st.write('total_matches per my calculation',total_matches)
+    analysis=betting_matches.copy()
+    # totals = analysis.groupby('total_factor').agg(winning=('result_all','count'))
+    # totals_1=analysis.groupby([analysis['total_factor'].abs(),'result_all']).agg(winning=('result_all','count')).reset_index()
+    # totals_1['result_all']=totals_1['result_all'].replace({0:'tie',1:'win',-1:'lose'})
+
+    # st.write('shows the number of games at each factor level')
+    # st.write(totals.rename(columns={'winning':'number_of_games'}))
+    # st.write('sum of each factor level should correspond to table above',totals_1)
+    # st.write('sum of winning column should be 267 I think',totals_1['winning'].sum())
+    # st.write('count of week column should be 267',analysis['Week'].count())
+
+    def run_filter_week(analysis):
+        return analysis[analysis['Week']<finished_week+1]
+    
+    analysis=run_filter_week(analysis)
+
+    totals = analysis.groupby('total_factor').agg(winning=('result_all','count'))
+    totals_graph=totals.reset_index().rename(columns={'winning':'number_of_games'})
+
+    chart_power= alt.Chart(totals_graph).mark_bar().encode(alt.X('total_factor:O',axis=alt.Axis(title='total_factor_per_match',labelAngle=0)),
+    alt.Y('number_of_games'))
+    text=chart_power.mark_text(dy=-7).encode(text=alt.Text('number_of_games:N',format=",.0f"),color=alt.value('black'))
+    st.altair_chart(chart_power + text,use_container_width=True)
+    
+    def win_loss_df(analysis):
+        totals_1=analysis.groupby([analysis['total_factor'].abs(),'result_all']).agg(winning=('result_all','count')).reset_index()
+        totals_1['result_all']=totals_1['result_all'].replace({0:'tie',1:'win',-1:'lose'})
+        return totals_1
+
+    totals_1=win_loss_df(analysis)
+    totals_1_penalty=win_loss_df(run_filter_week(betting_matches_penalty))
+    totals_1_intercept=win_loss_df(run_filter_week(betting_matches_intercept))
+    totals_1_sin_bin=win_loss_df(run_filter_week(betting_matches_sin_bin))
+
+
+    # https://www.quackit.com/css/css_color_codes.cfm
+    color_scale = alt.Scale(
+    domain=[
+        "lose",
+        "tie",
+        "win"],
+        range=["red", "lightgrey","LimeGreen"])
+    chart_power= alt.Chart(totals_1).mark_bar().encode(alt.X('total_factor:O',axis=alt.Axis(title='factor',labelAngle=0)),
+    alt.Y('winning'),color=alt.Color('result_all',scale=color_scale))
+    # st.altair_chart(chart_power,use_container_width=True)
+
+    
+    normalized_table = (totals_1[totals_1['result_all']!='tie']).copy()
+    # st.write('graph date to be cleaned',totals_1)
+    chart_power= alt.Chart(normalized_table).mark_bar().encode(alt.X('total_factor:O',axis=alt.Axis(title='factor',labelAngle=0)),
+    alt.Y('winning',stack="normalize"),color=alt.Color('result_all',scale=color_scale))
+    overlay = pd.DataFrame({'winning': [0.5]})
+    vline = alt.Chart(overlay).mark_rule(color='black', strokeWidth=2).encode(y='winning:Q')
+    text = alt.Chart(normalized_table).mark_text(dx=-1, dy=+60, color='white').encode(
+    x=alt.X('total_factor:O'),
+    y=alt.Y('winning',stack="normalize"),
+    detail='winning',
+    text=alt.Text('winning:Q', format='.0f'))
+    updated_test_chart=chart_power+vline+text
+    
+    st.altair_chart(updated_test_chart,use_container_width=True)
+
+    # st.write('shows the number of games at each factor level')
+    # st.write(totals.rename(columns={'winning':'number_of_games'}))
+    # st.write('sum of each factor level should correspond to table above',totals_1)
+    # st.write('sum of winning column should be 267 I think',totals_1['winning'].sum())
+    # st.write('count of week column should be 267',analysis['Week'].count())
+
+with st.expander('Betting Result'):
     reset_data=totals_1.copy()
-    # reset_data['result_all']=reset_data['result_all'].replace({'tie':0,'win':1,'lose':-1})
-    reset_data['result_all']=reset_data['result_all'].replace({'tie':'0','win':'1','lose':'-1'})
-    reset_data=reset_data.pivot(index='result_all',columns='total_factor',values='winning').fillna(0)
-    reset_data['betting_factor_total']=reset_data[3]+reset_data[4]+reset_data[5]
-    reset_data=reset_data.sort_values(by='betting_factor_total',ascending=False)
-    # st.write('working???',reset_data)
-    reset_data.loc['Total']=reset_data.sum()
-    # reset_data.loc['No. of Bets Made'] = reset_data.loc[[1,-1]].sum()
-    reset_data.loc['No. of Bets Made'] = reset_data.loc[['1','-1']].sum()
-    reset_data=reset_data.apply(pd.to_numeric, downcast='integer')
-    # reset_data.loc['% Winning'] = ((reset_data.loc[1] / reset_data.loc['No. of Bets Made'])*100).apply('{:,.1f}%'.format)
-    reset_data.loc['% Winning'] = ((reset_data.loc['1'] / reset_data.loc['No. of Bets Made']))
-    reorder_list=['1','-1','0','Total','No. of Bets Made','% Winning']
-    reset_data=reset_data.reindex(reorder_list)
+    def run_result(reset_data):
+        # reset_data['result_all']=reset_data['result_all'].replace({'tie':0,'win':1,'lose':-1})
+        reset_data['result_all']=reset_data['result_all'].replace({'tie':'0','win':'1','lose':'-1'})
+        reset_data=reset_data.pivot(index='result_all',columns='total_factor',values='winning').fillna(0)
+        reset_data=reset_data.rename(columns={3:'factor_3',4:'factor_4',5:'factor_5'})
+        # st.write(reset_data.loc[:,'factor_3':])
+        # sum_cols=reset_data.loc[:,reset_data.columns.isin(['factor_3','factor_4','factor_5'])]
+        # st.write('inside function',  )
+        # if reset_data not in reset_data:
+        #     st.write('oh oh')
+        reset_data.loc[:,'betting_factor_total']=(reset_data.loc[:,'factor_3':]).sum(axis=1)
+        # reset_data['betting_factor_total']=reset_data[3]+reset_data[4]+reset_data[5]
+        reset_data=reset_data.sort_values(by='betting_factor_total',ascending=False)
+        # st.write('working???',reset_data)
+        reset_data.loc['Total']=reset_data.sum()
+        # reset_data.loc['No. of Bets Made'] = reset_data.loc[[1,-1]].sum()
+        reset_data.loc['No. of Bets Made'] = reset_data.loc[['1','-1']].sum()
+        reset_data=reset_data.apply(pd.to_numeric, downcast='integer')
+        # reset_data.loc['% Winning'] = ((reset_data.loc[1] / reset_data.loc['No. of Bets Made'])*100).apply('{:,.1f}%'.format)
+        reset_data.loc['% Winning'] = ((reset_data.loc['1'] / reset_data.loc['No. of Bets Made']))
+        reorder_list=['1','-1','0','Total','No. of Bets Made','% Winning']
+        reset_data=reset_data.reindex(reorder_list)
+
+        
+        reset_data = reset_data.style.format("{:.0f}", na_rep='-')
+        return reset_data.format(formatter="{:.1%}", subset=pd.IndexSlice[['% Winning'], :])
+
+    reset_data=run_result(reset_data)
+    reset_data_penalty=run_result(totals_1_penalty)
+    reset_data_intercept=run_result(totals_1_intercept)
+    reset_data_sin_bin=run_result(totals_1_sin_bin)
+
 
     st.write('This shows the betting result')
-    reset_data = reset_data.style.format("{:.0f}", na_rep='-')
-    reset_data = reset_data.format(formatter="{:.1%}", subset=pd.IndexSlice[['% Winning'], :])
+    col9,col10=st.columns(2)
+    col11,col12=st.columns(2)
+    with col9:
+        st.subheader('This represents the Error factor')
+        st.write(reset_data)
+    with col10:
+        st.subheader('This represents the Penalty factor')
+        st.write(reset_data_penalty)
+    with col11:
+        st.subheader('This represents the Intercept factor')
+        st.write(reset_data_intercept)
+    with col12:
+        st.subheader('This represents the Sin Bin factor')
+        st.write(reset_data_sin_bin)
 
-    st.write(reset_data)
-    st.write('Broken down by the number of factors indicating the strength of the signal')
+    # st.write('Broken down by the number of factors indicating the strength of the signal')
 
 # with st.expander('Analysis of Penalty Factors'):
 #     analysis_factors = betting_matches.copy()
@@ -904,69 +943,99 @@ with st.expander('Analysis of Factors'):
 
 with st.expander('Checking Performance where Total Factor = 2 or 3:  Additional Diagnostic'):
     df_factor = betting_matches.copy()
+    df_factor_penalty = betting_matches_penalty.copy()
+    df_factor_intercept=betting_matches_intercept.copy()
+    df_factor_sin_bin=betting_matches_sin_bin.copy()
+
     two_factor_df = df_factor[df_factor['total_factor'].abs()==2]
     # st.write(two_factor_df)
-    factor_2_3_home_turnover_filter = (df_factor['total_factor']==2)&(df_factor['home_turnover_sign']==-1) | \
-    (df_factor['total_factor']==-2)&(df_factor['home_turnover_sign']==1) | (df_factor['total_factor']==3)&(df_factor['home_turnover_sign']==1) | \
-    (df_factor['total_factor']==-3)&(df_factor['home_turnover_sign']==-1)
+    def diagnostic(df_factor):
+        factor_2_3_home_turnover_filter = (df_factor['total_factor']==2)&(df_factor['home_turnover_sign']==-1) | \
+        (df_factor['total_factor']==-2)&(df_factor['home_turnover_sign']==1) | (df_factor['total_factor']==3)&(df_factor['home_turnover_sign']==1) | \
+        (df_factor['total_factor']==-3)&(df_factor['home_turnover_sign']==-1)
 
-    factor_2_3_away_turnover_filter = (df_factor['total_factor']==2)&(df_factor['away_turnover_sign']==-1) | \
-    (df_factor['total_factor']==-2)&(df_factor['away_turnover_sign']==1) | (df_factor['total_factor']==3)&(df_factor['away_turnover_sign']==1) | \
-    (df_factor['total_factor']==-3)&(df_factor['away_turnover_sign']==-1)
+        factor_2_3_away_turnover_filter = (df_factor['total_factor']==2)&(df_factor['away_turnover_sign']==-1) | \
+        (df_factor['total_factor']==-2)&(df_factor['away_turnover_sign']==1) | (df_factor['total_factor']==3)&(df_factor['away_turnover_sign']==1) | \
+        (df_factor['total_factor']==-3)&(df_factor['away_turnover_sign']==-1)
 
-    factor_2_3_home_cover_filter = (df_factor['total_factor']==2)&(df_factor['home_cover_sign']==-1) | \
-    (df_factor['total_factor']==-2)&(df_factor['home_cover_sign']==1) | (df_factor['total_factor']==3)&(df_factor['home_cover_sign']==1) | \
-    (df_factor['total_factor']==-3)&(df_factor['home_cover_sign']==-1)
+        factor_2_3_home_cover_filter = (df_factor['total_factor']==2)&(df_factor['home_cover_sign']==-1) | \
+        (df_factor['total_factor']==-2)&(df_factor['home_cover_sign']==1) | (df_factor['total_factor']==3)&(df_factor['home_cover_sign']==1) | \
+        (df_factor['total_factor']==-3)&(df_factor['home_cover_sign']==-1)
 
-    factor_2_3_away_cover_filter = (df_factor['total_factor']==2)&(df_factor['away_cover_sign']==-1) | \
-    (df_factor['total_factor']==-2)&(df_factor['away_cover_sign']==1) | (df_factor['total_factor']==3)&(df_factor['away_cover_sign']==1) | \
-    (df_factor['total_factor']==-3)&(df_factor['away_cover_sign']==-1)
+        factor_2_3_away_cover_filter = (df_factor['total_factor']==2)&(df_factor['away_cover_sign']==-1) | \
+        (df_factor['total_factor']==-2)&(df_factor['away_cover_sign']==1) | (df_factor['total_factor']==3)&(df_factor['away_cover_sign']==1) | \
+        (df_factor['total_factor']==-3)&(df_factor['away_cover_sign']==-1)
 
-    factor_2_3_power_filter = (df_factor['total_factor']==2)&(df_factor['power_pick']==-1) | \
-    (df_factor['total_factor']==-2)&(df_factor['power_pick']==1) | (df_factor['total_factor']==3)&(df_factor['power_pick']==1) | \
-    (df_factor['total_factor']==-3)&(df_factor['power_pick']==-1)
+        factor_2_3_power_filter = (df_factor['total_factor']==2)&(df_factor['power_pick']==-1) | \
+        (df_factor['total_factor']==-2)&(df_factor['power_pick']==1) | (df_factor['total_factor']==3)&(df_factor['power_pick']==1) | \
+        (df_factor['total_factor']==-3)&(df_factor['power_pick']==-1)
 
-    df_factor['home_turnover_diagnostic'] = (df_factor['home_turnover_sign'].where(factor_2_3_home_turnover_filter)) * df_factor['home_cover_result']
-    df_factor['away_turnover_diagnostic'] = (df_factor['away_turnover_sign'].where(factor_2_3_away_turnover_filter)) * df_factor['home_cover_result']
-    df_factor['home_cover_diagnostic'] = (df_factor['home_cover_sign'].where(factor_2_3_home_cover_filter)) * df_factor['home_cover_result']
-    df_factor['away_cover_diagnostic'] = (df_factor['away_cover_sign'].where(factor_2_3_away_cover_filter)) * df_factor['home_cover_result']
-    df_factor['power_diagnostic'] = (df_factor['power_pick'].where(factor_2_3_power_filter)) * df_factor['home_cover_result']
-    # st.write(df_factor)
+        df_factor['home_turnover_diagnostic'] = (df_factor['home_turnover_sign'].where(factor_2_3_home_turnover_filter)) * df_factor['home_cover_result']
+        df_factor['away_turnover_diagnostic'] = (df_factor['away_turnover_sign'].where(factor_2_3_away_turnover_filter)) * df_factor['home_cover_result']
+        df_factor['home_cover_diagnostic'] = (df_factor['home_cover_sign'].where(factor_2_3_home_cover_filter)) * df_factor['home_cover_result']
+        df_factor['away_cover_diagnostic'] = (df_factor['away_cover_sign'].where(factor_2_3_away_cover_filter)) * df_factor['home_cover_result']
+        df_factor['power_diagnostic'] = (df_factor['power_pick'].where(factor_2_3_power_filter)) * df_factor['home_cover_result']
+        # st.write(df_factor)
 
-    df_factor_table = df_factor['home_turnover_diagnostic'].value_counts()
-    away_turnover=df_factor['away_turnover_diagnostic'].value_counts()
-    home_cover=df_factor['home_cover_diagnostic'].value_counts()
-    away_cover=df_factor['away_cover_diagnostic'].value_counts()
-    power=df_factor['power_diagnostic'].value_counts()
-    df_factor_table_1=pd.concat([df_factor_table,away_turnover,home_cover,away_cover,power],axis=1)
-    df_factor_table_1['total_turnover'] = df_factor_table_1['home_turnover_diagnostic'].add (df_factor_table_1['away_turnover_diagnostic'])
-    # st.write(test)
-    df_factor_table_1['total_season_cover'] = df_factor_table_1['home_cover_diagnostic'] + df_factor_table_1['away_cover_diagnostic']
-    # st.write('df table 2', df_factor_table_1)
+        df_factor_table = df_factor['home_turnover_diagnostic'].value_counts()
+        away_turnover=df_factor['away_turnover_diagnostic'].value_counts()
+        home_cover=df_factor['home_cover_diagnostic'].value_counts()
+        away_cover=df_factor['away_cover_diagnostic'].value_counts()
+        power=df_factor['power_diagnostic'].value_counts()
+        df_factor_table_1=pd.concat([df_factor_table,away_turnover,home_cover,away_cover,power],axis=1)
+        df_factor_table_1['total_turnover'] = df_factor_table_1['home_turnover_diagnostic'].add (df_factor_table_1['away_turnover_diagnostic'])
+        # st.write(test)
+        df_factor_table_1['total_season_cover'] = df_factor_table_1['home_cover_diagnostic'] + df_factor_table_1['away_cover_diagnostic']
+        # st.write('df table 2', df_factor_table_1)
 
-    df_factor_table_1=df_factor_table_1.reset_index()
-    df_factor_table_1['index']=df_factor_table_1['index'].astype(int)
-    # st.write('df table 2', df_factor_table_1)
-    df_factor_table_1['index']=df_factor_table_1['index'].astype(str)
-    # st.write('df table 2', df_factor_table_1)
-    df_factor_table_1=df_factor_table_1.set_index('index')
-    # st.write('df table 2', df_factor_table_1)
-    df_factor_table_1.loc['Total']=df_factor_table_1.sum()
-    # st.write('latest', df_factor_table_1)
-    # st.write('latest', df_factor_table_1.shape)
+        df_factor_table_1=df_factor_table_1.reset_index()
+        df_factor_table_1['index']=df_factor_table_1['index'].astype(int)
+        # st.write('df table 2', df_factor_table_1)
+        df_factor_table_1['index']=df_factor_table_1['index'].astype(str)
+        # st.write('df table 2', df_factor_table_1)
+        df_factor_table_1=df_factor_table_1.set_index('index')
+        # st.write('df table 2', df_factor_table_1)
+        df_factor_table_1.loc['Total']=df_factor_table_1.sum()
+        # st.write('latest', df_factor_table_1)
+        # st.write('latest', df_factor_table_1.shape)
 
-    if df_factor_table_1.shape > (2,7):
-        df_factor_table_1.loc['No. of Bets Made'] = df_factor_table_1.loc[['1','-1']].sum() 
-        df_factor_table_1.loc['% Winning'] = ((df_factor_table_1.loc['1'] / df_factor_table_1.loc['No. of Bets Made']))
-    # else:
-    #     # st.write('Returning df with no anal')
-    #     return df_factor_table_1
+        if df_factor_table_1.shape > (2,7):
+            df_factor_table_1.loc['No. of Bets Made'] = df_factor_table_1.loc[['1','-1']].sum() 
+            df_factor_table_1.loc['% Winning'] = ((df_factor_table_1.loc['1'] / df_factor_table_1.loc['No. of Bets Made']))
+        # else:
+        #     # st.write('Returning df with no anal')
+        return df_factor_table_1
+
+    df_factor_table_1=diagnostic(df_factor)
+    df_factor_table_penalty=diagnostic(df_factor_penalty)
+    df_factor_table_intercept=diagnostic(df_factor_intercept)
+    df_factor_table_sin_bin=diagnostic(df_factor_sin_bin)
+
+    def diagnostic_presentation(df_factor_table_1):
+        cols_to_move=['total_turnover','total_season_cover','power_diagnostic']
+        df_factor_table_1 = df_factor_table_1[ cols_to_move + [ col for col in df_factor_table_1 if col not in cols_to_move ] ]
+        df_factor_table_1=df_factor_table_1.loc[:,['total_turnover','total_season_cover','power_diagnostic']]
+        df_factor_table_1_presentation = df_factor_table_1.style.format("{:.0f}", na_rep='-')
+        df_factor_table_1_presentation = df_factor_table_1_presentation.format(formatter="{:.1%}", subset=pd.IndexSlice[['% Winning'], :])
+        return df_factor_table_1_presentation
+
+    df_factor_table_1_presentation=diagnostic_presentation(df_factor_table_1)
+    df_factor_table_1_presentation_penalty=diagnostic_presentation(df_factor_table_penalty)
+    df_factor_table_1_presentation_intercept=diagnostic_presentation(df_factor_table_intercept)
+    df_factor_table_1_presentation_sin_bin=diagnostic_presentation(df_factor_table_sin_bin)
 
 
-    cols_to_move=['total_turnover','total_season_cover','power_diagnostic']
-    df_factor_table_1 = df_factor_table_1[ cols_to_move + [ col for col in df_factor_table_1 if col not in cols_to_move ] ]
-    df_factor_table_1=df_factor_table_1.loc[:,['total_turnover','total_season_cover','power_diagnostic']]
-    df_factor_table_1_presentation = df_factor_table_1.style.format("{:.0f}", na_rep='-')
-    df_factor_table_1_presentation = df_factor_table_1_presentation.format(formatter="{:.1%}", subset=pd.IndexSlice[['% Winning'], :])
-
-    st.write(df_factor_table_1_presentation)
+    col5,col6,=st.columns(2)
+    col7,col8,=st.columns(2)
+    with col5:
+        st.subheader('This represents the Error factor')
+        st.write(df_factor_table_1_presentation)
+    with col6:
+        st.subheader('This represents the Penalty factor')
+        st.write(df_factor_table_1_presentation_penalty)
+    with col7:
+        st.subheader('This represents the Intercept factor')
+        st.write(df_factor_table_1_presentation_intercept)
+    with col8:
+        st.subheader('This represents the Sin Bin factor')
+        st.write(df_factor_table_1_presentation_sin_bin)

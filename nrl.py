@@ -10,7 +10,11 @@ import datetime as dt
 from st_aggrid import AgGrid, GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode, JsCode
 
 st.set_page_config(layout="wide")
-finished_week=26
+
+# finished_week=26
+finished_week=0
+
+# Starts Thursday 10 March, need to fix it up so that it runs for 2022
 
 results_excel=pd.read_excel('C:/Users/Darragh/Documents/Python/nrl/nrl.xlsx')
 id_excel=pd.read_excel('C:/Users/Darragh/Documents/Python/nrl/nrl_id.xlsx')
@@ -54,8 +58,17 @@ data['month']=data['Date'].dt.month
 data['day']=data['Date'].dt.day
 data=data.drop(['Date','Unnamed: 0'],axis=1)
 data['Date']=pd.to_datetime(data[['year','month','day']])
-data['Week'] = data['Week'].replace({'Finals':26})
-data['Week']=pd.to_numeric(data['Week'])
+
+def select_year(data,week_key='Week'):
+    data[week_key] = data[week_key].replace({'Finals':26})
+    data[week_key]=pd.to_numeric(data[week_key])
+    data=data.drop('Week',axis=1) # TAKE THIS OUT IF YOU WANT TO RUN 2021
+    data=data.rename(columns={week_key:'Week'})
+    data=data.dropna(subset=['Week'])
+    return data
+
+data=select_year(data,week_key='Week_2022')
+# st.write('here work????', data)
 team_names_id=team_names_id.rename(columns={'Team':'Home Team'})
 # st.write('original team id',team_names_id)
 # st.write(data)
@@ -68,6 +81,7 @@ data=pd.merge(fb_ref_2020,team_names_id_2,on='Away Team').rename(columns={'ID':'
 cols_to_move=['Week','Date','Home ID','Home Team','Away ID','Away Team','Spread']
 cols = cols_to_move + [col for col in data if col not in cols_to_move]
 data=data[cols]
+# st.write('how does this look...??', data)
 
 def spread_workings(data):
     data['home_win']=data['Home Points'] - data['Away Points']
@@ -120,6 +134,7 @@ def penalty_workings(data,week_start):
     return season_cover.sort_values(by=['Week','Date','ID'],ascending=['True','True','True'])
 
 def penalty_2(season_cover_df):    
+    # sourcery skip: inline-immediately-returned-variable
     # https://stackoverflow.com/questions/53335567/use-pandas-shift-within-a-group
     # st.write('before line in function', season_cover_df)
     season_cover_df['prev_penalty']=season_cover_df.groupby('ID')['penalty_sign'].shift()
@@ -139,7 +154,7 @@ def penalty_cover_3(data,column_sign,name):
     return data
 
 turnover=spread_workings(data)
-# st.write('turnover workings', turnover)
+st.write('turnover workings how does this look.......', turnover)
 turnover_1 = turnover_workings(turnover,-1)
 turnover_2=turnover_2(turnover_1)
 turnover_3=season_cover_3(turnover_2,'turnover_sign','prev_turnover')
@@ -210,7 +225,7 @@ first_qtr=matrix_df_1.copy()
 start=-3
 finish=0
 first_4=first_qtr[first_qtr['Week'].between(start,finish)].copy()
-def games_matrix_workings(first_4):
+def games_matrix_workings(first_4):  # sourcery skip: remove-unreachable-code
     group_week = first_4.groupby('Week')
     raw_data_2=[]
     game_weights = iter([-0.125, -0.25,-0.5,-1])
@@ -256,6 +271,7 @@ def test_4(matrix_df_1):
 
 # with st.beta_expander('CORRECT Power Ranking to be used in Matrix Multiplication'):
     # # https://stackoverflow.com/questions/9621362/how-do-i-compute-a-weighted-moving-average-using-pandas
+# sourcery skip: remove-zero-from-range
 grouped = test_df_2.groupby('ID')
 # https://stackoverflow.com/questions/16974047/efficient-way-to-find-missing-elements-in-an-integer-sequence
 # https://stackoverflow.com/questions/62471485/is-it-possible-to-insert-missing-sequence-numbers-in-python

@@ -12,7 +12,7 @@ from st_aggrid import AgGrid, GridOptionsBuilder, AgGrid, GridUpdateMode, DataRe
 st.set_page_config(layout="wide")
 
 # finished_week=26
-finished_week=0
+finished_week=1
 
 # Starts Thursday 10 March, need to fix it up so that it runs for 2022
 
@@ -22,7 +22,7 @@ id_excel=pd.read_excel('C:/Users/Darragh/Documents/Python/nrl/nrl_id.xlsx')
 def csv_save(x):
     x.to_csv('C:/Users/Darragh/Documents/Python/nrl/nrl_data.csv')
     return x
-# csv_save(results_excel)
+csv_save(results_excel)
 
 @st.cache
 def read_csv_data(file):
@@ -107,7 +107,7 @@ def turnover_workings(data,week_start):
     season_cover=pd.concat([home_turnover_df,away_turnover_df],ignore_index=True)
     # season_cover_df = pd.melt(season_cover_df,id_vars=['Week', 'home_cover'],value_vars=['Home ID', 'Away ID']).set_index('Week').rename(columns={'value':'ID'}).\
     # drop('variable',axis=1).reset_index().sort_values(by=['Week','ID'],ascending=True)
-    return season_cover.sort_values(by=['Week','Date','ID'],ascending=['True','True','True'])
+    return season_cover.sort_values(by=['Week','Date','ID'],ascending=[True,True,True])
 
 def turnover_2(season_cover_df):    
     # https://stackoverflow.com/questions/53335567/use-pandas-shift-within-a-group
@@ -131,7 +131,7 @@ def penalty_workings(data,week_start):
     season_cover=pd.concat([home_turnover_df,away_turnover_df],ignore_index=True)
     # season_cover_df = pd.melt(season_cover_df,id_vars=['Week', 'home_cover'],value_vars=['Home ID', 'Away ID']).set_index('Week').rename(columns={'value':'ID'}).\
     # drop('variable',axis=1).reset_index().sort_values(by=['Week','ID'],ascending=True)
-    return season_cover.sort_values(by=['Week','Date','ID'],ascending=['True','True','True'])
+    return season_cover.sort_values(by=['Week','Date','ID'],ascending=[True,True,True])
 
 def penalty_2(season_cover_df):    
     # sourcery skip: inline-immediately-returned-variable
@@ -154,7 +154,6 @@ def penalty_cover_3(data,column_sign,name):
     return data
 
 turnover=spread_workings(data)
-st.write('turnover workings how does this look.......', turnover)
 turnover_1 = turnover_workings(turnover,-1)
 turnover_2=turnover_2(turnover_1)
 turnover_3=season_cover_3(turnover_2,'turnover_sign','prev_turnover')
@@ -189,7 +188,7 @@ def season_cover_workings(data,home,away,name,week_start):
     season_cover=pd.concat([home_cover_df,away_cover_df],ignore_index=True)
     # season_cover_df = pd.melt(season_cover_df,id_vars=['Week', 'home_cover'],value_vars=['Home ID', 'Away ID']).set_index('Week').rename(columns={'value':'ID'}).\
     # drop('variable',axis=1).reset_index().sort_values(by=['Week','ID'],ascending=True)
-    return season_cover.sort_values(by=['Week','Date','ID'],ascending=['True','True','True'])
+    return season_cover.sort_values(by=['Week','Date','ID'],ascending=[True,True,True])
 
 def season_cover_2(season_cover_df,column_name):    
     # https://stackoverflow.com/questions/54993050/pandas-groupby-shift-and-cumulative-sum
@@ -299,8 +298,12 @@ list_inverse_matrix=[]
 list_power_ranking=[]
 power_df=df_power.loc[:,['Week','ID','adj_spread']].copy()
 games_df=matrix_df_1.copy()
-first=list(range(-3,24))
-last=list(range(0,27))
+# first=list(range(-3,24))
+# last=list(range(0,27))
+
+first=list(range(-3,finished_week))
+last=list(range(0,finished_week+1))
+
 for first,last in zip(first,last):
     first_section=games_df[games_df['Week'].between(first,last)]
     full_game_matrix=games_matrix_workings(first_section)

@@ -1,20 +1,16 @@
 import pandas as pd
 import numpy as np
 import streamlit as st
-# from io import BytesIO
-# import os
-# import base64 
 import altair as alt
 import datetime as dt
-# from st_aggrid import AgGrid
 from st_aggrid import AgGrid, GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode, JsCode
 
 st.set_page_config(layout="wide")
 
 # finished_week=26
-finished_week=1
+finished_week=3
 
-# Starts Thursday 10 March, need to fix it up so that it runs for 2022
+# backed Wests Tigers bet365, need to back NZ Warriors before Sat 4am ie Friday night
 
 results_excel=pd.read_excel('C:/Users/Darragh/Documents/Python/nrl/nrl.xlsx')
 id_excel=pd.read_excel('C:/Users/Darragh/Documents/Python/nrl/nrl_id.xlsx')
@@ -64,10 +60,13 @@ def select_year(data,week_key='Week'):
     data[week_key]=pd.to_numeric(data[week_key])
     data=data.drop('Week',axis=1) # TAKE THIS OUT IF YOU WANT TO RUN 2021
     data=data.rename(columns={week_key:'Week'})
-    data=data.dropna(subset=['Week'])
+    data=data.dropna(subset=['Week']) # Uncheck this for 2022
     return data
 
 data=select_year(data,week_key='Week_2022')
+# data=select_year(data,week_key='Week')
+
+
 # st.write('here work????', data)
 team_names_id=team_names_id.rename(columns={'Team':'Home Team'})
 # st.write('original team id',team_names_id)
@@ -212,8 +211,8 @@ matrix_df=matrix_df.reset_index().rename(columns={'index':'unique_match_id'})
 test_df = matrix_df.copy()
 matrix_df['at_home'] = 1
 matrix_df['at_away'] = -1
-matrix_df['home_pts_adv'] = -3
-matrix_df['away_pts_adv'] = 3
+matrix_df['home_pts_adv'] = 3
+matrix_df['away_pts_adv'] = -3
 matrix_df['away_spread']=-matrix_df['Spread']
 matrix_df=matrix_df.rename(columns={'Spread':'home_spread'})
 matrix_df_1=matrix_df.loc[:,['unique_match_id','Week','Home ID','Away ID','at_home','at_away','home_spread','away_spread','home_pts_adv','away_pts_adv','Date','Home Points','Away Points']].copy()
@@ -960,6 +959,86 @@ with st.expander('Betting Result'):
     
 #     st.altair_chart(updated_test_chart,use_container_width=True)
 
+
+with st.expander('Deep Dive on Power Factor'):
+    power_factor_analysis = analysis_factors.copy()
+    power_factor_analysis['power_ranking_success?'] = power_factor_analysis['power_pick'] * power_factor_analysis['home_cover_result']
+    power_factor_analysis['home_power_less_away'] = power_factor_analysis['away_power']-power_factor_analysis['home_power']
+    power_factor_analysis['power_margin'] = power_factor_analysis['home_power_less_away'] - power_factor_analysis['Spread']
+    cols_to_move=['Week','Date','Home Team','Away Team','Spread','home_power_less_away','power_margin','power_ranking_success?','home_power','away_power']
+    power_factor_analysis = power_factor_analysis[ cols_to_move + [ col for col in power_factor_analysis if col not in cols_to_move ] ]
+    week_power_analysis=power_factor_analysis.groupby(['Week'])['power_ranking_success?'].sum().reset_index()
+    week_power_analysis['cum_sum']=week_power_analysis['power_ranking_success?'].cumsum()
+    
+    # st.write(week_power_analysis)
+
+
+    decile_df_abs_home=power_factor_analysis.groupby(['power_pick'])['power_ranking_success?'].sum().reset_index()
+    st.write('breaks out Home Away')
+    # st.write(decile_df_abs_home)
+    st.altair_chart(alt.Chart(decile_df_abs_home).mark_bar().encode(x='power_pick:N',y='power_ranking_success?'),use_container_width=True)
+
+    decile_df_abs_home_1=power_factor_analysis.groupby(['Week','power_pick'])['power_ranking_success?'].sum().reset_index()
+    decile_df_abs_home_1=power_factor_analysis.groupby(['Week','power_pick']).agg(
+        power_ranking_success=('power_ranking_success?','sum'),count=('power_pick','count')).reset_index()
+    # st.write('testing', test_replicate)
+    decile_df_abs_home_1['test_sum']=decile_df_abs_home_1.groupby(['Week'])['power_ranking_success'].transform('sum')
+    decile_df_abs_home_1['cum_sum_home_away']=decile_df_abs_home_1.groupby(['power_pick'])['power_ranking_success'].cumsum()
+    # st.write('breaks out Home Away by week')
+    # st.write(decile_df_abs_home_1)
+    # st.write( power_factor_analysis[(power_factor_analysis['Home Team'].str.contains('Hoffen') | power_factor_analysis['Away Team'].str.contains('Hoffen'))] )
+    # st.write(power_factor_analysis)
+
+
+    scale_3=alt.Scale(domain=['1','-1'],range=['blue','red'])
+    def graph(decile_df_abs_home_1,column):
+        line_cover= alt.Chart(decile_df_abs_home_1).mark_line().encode(alt.X('Week:O',axis=alt.Axis(title='Week',labelAngle=0)),
+        alt.Y(column),color=alt.Color('power_pick:Q',scale=scale_3))
+        text_cover=line_cover.mark_text(baseline='middle',dx=20,dy=-5).encode(text=alt.Text(column),color=alt.value('black'))
+        overlay = pd.DataFrame({column: [0]})
+        vline = alt.Chart(overlay).mark_rule(color='black', strokeWidth=1).encode(y=column)
+        return st.altair_chart(line_cover + text_cover + vline,use_container_width=True)
+
+
+    st.write('Below shows the weekly net result for Home and Away games backed by the Power Factor')
+    graph(decile_df_abs_home_1,column='power_ranking_success')
+    st.write('Blue = Home and Red = Away')
+    st.write('Below shows the cumulative win/loss by home away games')
+    graph(decile_df_abs_home_1,column='cum_sum_home_away')
+    st.write('What is the breakdown of power pick by Home / Away')
+    
+    line_cover= alt.Chart(decile_df_abs_home_1).mark_bar().encode(alt.X('Week:O',axis=alt.Axis(title='Week',labelAngle=0)),
+    alt.Y('count'),color=alt.Color('power_pick:N'))
+    text_cover=line_cover.mark_text(baseline='middle').encode(text=alt.Text('count:N'),color=alt.value('black'))
+    overlay = pd.DataFrame({'count': [4.5]})
+    vline = alt.Chart(overlay).mark_rule(color='black', strokeWidth=1).encode(y='count:Q')
+    st.altair_chart(line_cover + vline,use_container_width=True)
+
+
+
+    decile_df_abs_spread=power_factor_analysis.groupby(pd.qcut(power_factor_analysis['Spread'].abs(), q=10,duplicates='drop'))['power_ranking_success?'].sum().reset_index()
+    # st.write('breaks out Spread')
+    # st.write(decile_df_abs_spread)
+    line_cover= alt.Chart(decile_df_abs_spread).mark_bar().encode(alt.X('Spread',axis=alt.Axis(title='Spread',labelAngle=0)),
+    alt.Y('power_ranking_success?:Q'))
+    text_cover=line_cover.mark_text(baseline='middle').encode(text=alt.Text('power_ranking_success?'),color=alt.value('black'))
+    overlay = pd.DataFrame({'power_ranking_success?': [0]})
+    vline = alt.Chart(overlay).mark_rule(color='red', strokeWidth=1).encode(y='power_ranking_success?:Q')
+    st.write('The Below Chart splits the Spread into even buckets and looks at the win/loss record for each bucket')    
+    st.altair_chart(line_cover + vline,use_container_width=True)
+
+    st.write('Below is breaking into even buckets the difference between the Model and the Spread to see if there is any insight')
+    decile_df=power_factor_analysis.groupby(pd.qcut(power_factor_analysis['power_margin'], 8))['power_ranking_success?'].sum()
+    decile_df_abs=power_factor_analysis.groupby(pd.qcut(power_factor_analysis['power_margin'].abs(), 8))['power_ranking_success?'].sum().reset_index()
+    # st.write(decile_df)
+    # st.write(decile_df_abs)
+    line_cover= alt.Chart(decile_df_abs).mark_bar().encode(alt.X('power_margin',axis=alt.Axis(title='power_margin',labelAngle=0)),
+    alt.Y('power_ranking_success?:Q'))
+    text_cover=line_cover.mark_text(baseline='middle').encode(text=alt.Text('power_ranking_success?'),color=alt.value('black'))
+    overlay = pd.DataFrame({'power_ranking_success?': [0]})
+    vline = alt.Chart(overlay).mark_rule(color='red', strokeWidth=1).encode(y='power_ranking_success?:Q')
+    st.altair_chart(line_cover + vline,use_container_width=True)
+
 with st.expander('Checking Performance where Total Factor = 2 or 3:  Additional Diagnostic'):
     df_factor = betting_matches.copy()
     df_factor_penalty = betting_matches_penalty.copy()
@@ -1035,7 +1114,7 @@ with st.expander('Checking Performance where Total Factor = 2 or 3:  Additional 
         df_factor_table_1 = df_factor_table_1[ cols_to_move + [ col for col in df_factor_table_1 if col not in cols_to_move ] ]
         df_factor_table_1=df_factor_table_1.loc[:,['total_turnover','total_season_cover','power_diagnostic']]
         df_factor_table_1_presentation = df_factor_table_1.style.format("{:.0f}", na_rep='-')
-        df_factor_table_1_presentation = df_factor_table_1_presentation.format(formatter="{:.1%}", subset=pd.IndexSlice[['% Winning'], :])
+        # df_factor_table_1_presentation = df_factor_table_1_presentation.format(formatter="{:.1%}", subset=pd.IndexSlice[['% Winning'], :])
         return df_factor_table_1_presentation
 
     df_factor_table_1_presentation=diagnostic_presentation(df_factor_table_1)

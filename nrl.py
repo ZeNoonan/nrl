@@ -7,10 +7,14 @@ from st_aggrid import AgGrid, GridOptionsBuilder, AgGrid, GridUpdateMode, DataRe
 
 st.set_page_config(layout="wide")
 
-# finished_week=26
+# finished_week=26 # select this for 2021
 finished_week=3
 
-# backed Wests Tigers bet365, need to back NZ Warriors before Sat 4am ie Friday night
+# backed Wests Tigers in week 3
+
+placeholder_1=st.empty()
+placeholder_2=st.empty()
+
 
 results_excel=pd.read_excel('C:/Users/Darragh/Documents/Python/nrl/nrl.xlsx')
 id_excel=pd.read_excel('C:/Users/Darragh/Documents/Python/nrl/nrl_id.xlsx')
@@ -64,7 +68,7 @@ def select_year(data,week_key='Week'):
     return data
 
 data=select_year(data,week_key='Week_2022')
-# data=select_year(data,week_key='Week')
+# data=select_year(data,week_key='Week') # select this for 2021
 
 
 # st.write('here work????', data)
@@ -455,7 +459,7 @@ with st.expander('Penalty Factor by Match Graph'):
     # st.write(updated_df)
     # updated_df=penalty_df
 
-with st.expander('Betting Slip Matches'):
+with placeholder_2.expander('Betting Slip Matches'):
     def run_analysis(updated_df):
         betting_matches=updated_df.loc[:,['Week','Date','Home ID','Home Team','Away ID', 'Away Team','Spread','Home Points','Away Points',
         'home_power','away_power','home_cover','away_cover','home_turnover_sign','away_turnover_sign',
@@ -605,6 +609,7 @@ with st.expander('Analysis of Factors'):
 
     # st.write('check for penalties', analysis_factors)
     def analysis_factor_function(analysis_factors,option_1='home_turnover_sign',option_2='away_turnover_sign'):
+        # sourcery skip: remove-unnecessary-else, swap-if-else-branches
         analysis_factors.loc[:,['home_turnover_success?']] = analysis_factors['home_turnover_sign'] * analysis_factors['home_cover_result']
         analysis_factors.loc[:,['away_turnover_success?']] = analysis_factors['away_turnover_sign'] * analysis_factors['home_cover_result']
         analysis_factors.loc[:,['home_cover_season_success?']] = analysis_factors['home_cover_sign'] * analysis_factors['home_cover_result']  
@@ -631,7 +636,7 @@ with st.expander('Analysis of Factors'):
         df_table_1.loc['Total']=df_table_1.sum()
         # st.write('latest', df_table_1)
         # st.write('latest', df_table_1.shape)
-        if df_table_1.shape > (2,7):
+        if df_table_1.shape > (3,7):
             # st.write('Returning df with analysis')
             # df_table_1.loc['No. of Bets Made'] = df_table_1.loc[[1,-1]].sum() # No losing bets so far!!!
             df_table_1.loc['No. of Bets Made'] = df_table_1.loc[['1','-1']].sum() # No losing bets so far!!!
@@ -1010,7 +1015,7 @@ with st.expander('Deep Dive on Power Factor'):
     line_cover= alt.Chart(decile_df_abs_home_1).mark_bar().encode(alt.X('Week:O',axis=alt.Axis(title='Week',labelAngle=0)),
     alt.Y('count'),color=alt.Color('power_pick:N'))
     text_cover=line_cover.mark_text(baseline='middle').encode(text=alt.Text('count:N'),color=alt.value('black'))
-    overlay = pd.DataFrame({'count': [4.5]})
+    overlay = pd.DataFrame({'count': [4]})
     vline = alt.Chart(overlay).mark_rule(color='black', strokeWidth=1).encode(y='count:Q')
     st.altair_chart(line_cover + vline,use_container_width=True)
 
@@ -1038,6 +1043,46 @@ with st.expander('Deep Dive on Power Factor'):
     overlay = pd.DataFrame({'power_ranking_success?': [0]})
     vline = alt.Chart(overlay).mark_rule(color='red', strokeWidth=1).encode(y='power_ranking_success?:Q')
     st.altair_chart(line_cover + vline,use_container_width=True)
+
+with placeholder_1.expander('Weekly Results'):
+    weekly_results=analysis.groupby(['Week','result']).agg(winning=('result','sum'),count=('result','count'))
+    weekly_test=analysis[analysis['total_factor'].abs()>2].loc[:,['Week','result']].copy()
+    df9 = weekly_test.groupby(['result','Week']).size().unstack(fill_value=0)
+    df9=df9.reset_index()
+    df9['result']=df9['result'].round(1).astype(str)
+    df9=df9.set_index('result').sort_index(ascending=False)
+    df9['grand_total']=df9.sum(axis=1)
+    df9.loc['Winning_Bets']=(df9.loc['1.0'])
+    df9.loc['Losing_Bets']=(df9.loc['-1.0'])
+    df9.loc['No. of Bets Made'] = df9.loc['1.0']+ df9.loc['-1.0']
+    df9.loc['PL_Bets']=df9.loc['Winning_Bets'] - df9.loc['Losing_Bets']
+    df9=df9.apply(pd.to_numeric, downcast='float')
+    graph_pl_data=df9.loc[['PL_Bets'],:].drop('grand_total',axis=1)
+    graph_pl_data=graph_pl_data.stack().reset_index().drop('result',axis=1).rename(columns={0:'week_result'})
+    graph_pl_data['Week']=graph_pl_data['Week'].astype(int)
+    graph_pl_data['total_result']=graph_pl_data['week_result'].cumsum()
+    graph_pl_data=graph_pl_data.melt(id_vars='Week',var_name='category',value_name='result')
+    df9.loc['% Winning'] = ((df9.loc['1.0']) / (df9.loc['1.0'] + df9.loc['-1.0']) ).replace({'<NA>':np.NaN})
+    table_test=df9.copy()
+    # https://stackoverflow.com/questions/64428836/use-pandas-style-to-format-index-rows-of-dataframe
+    df9 = df9.style.format("{:.1f}", na_rep='-')
+    df9 = df9.format(formatter="{:.0%}", subset=pd.IndexSlice[['% Winning'], :]).format(formatter="{:.0f}", subset=pd.IndexSlice[['1.0'], :]) \
+        .format(formatter="{:.0f}", subset=pd.IndexSlice[['-1.0'], :])
+        # .format(formatter="{:.0f}", subset=pd.IndexSlice[['-0.0'], :]) \
+
+    def graph_pl(decile_df_abs_home_1,column):
+        line_cover= alt.Chart(decile_df_abs_home_1).mark_line().encode(alt.X('Week:O',axis=alt.Axis(title='Week',labelAngle=0)),
+        alt.Y(column),color=alt.Color('category'))
+        text_cover=line_cover.mark_text(baseline='middle',dx=0,dy=-15).encode(text=alt.Text(column),color=alt.value('black'))
+        overlay = pd.DataFrame({column: [0]})
+        vline = alt.Chart(overlay).mark_rule(color='black', strokeWidth=1).encode(y=column)
+        return st.altair_chart(line_cover + text_cover + vline,use_container_width=True)
+
+    graph_pl(graph_pl_data,column='result')
+
+    st.write('Total betting result per Betting Table',betting_matches['result'].sum())
+    st.write('Total betting result per Above Table',table_test.loc['PL_Bets','grand_total'])
+    st.write(df9)
 
 with st.expander('Checking Performance where Total Factor = 2 or 3:  Additional Diagnostic'):
     df_factor = betting_matches.copy()
@@ -1097,7 +1142,7 @@ with st.expander('Checking Performance where Total Factor = 2 or 3:  Additional 
         # st.write('latest', df_factor_table_1)
         # st.write('latest', df_factor_table_1.shape)
 
-        if df_factor_table_1.shape > (2,7):
+        if df_factor_table_1.shape > (3,7):
             df_factor_table_1.loc['No. of Bets Made'] = df_factor_table_1.loc[['1','-1']].sum() 
             df_factor_table_1.loc['% Winning'] = ((df_factor_table_1.loc['1'] / df_factor_table_1.loc['No. of Bets Made']))
         # else:
@@ -1110,6 +1155,7 @@ with st.expander('Checking Performance where Total Factor = 2 or 3:  Additional 
     df_factor_table_sin_bin=diagnostic(df_factor_sin_bin)
 
     def diagnostic_presentation(df_factor_table_1):
+        # sourcery skip: inline-immediately-returned-variable
         cols_to_move=['total_turnover','total_season_cover','power_diagnostic']
         df_factor_table_1 = df_factor_table_1[ cols_to_move + [ col for col in df_factor_table_1 if col not in cols_to_move ] ]
         df_factor_table_1=df_factor_table_1.loc[:,['total_turnover','total_season_cover','power_diagnostic']]

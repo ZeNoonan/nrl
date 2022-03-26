@@ -7,6 +7,7 @@ from st_aggrid import AgGrid, GridOptionsBuilder, AgGrid, GridUpdateMode, DataRe
 
 st.set_page_config(layout="wide")
 
+# appears as if 2021 was normal year with normal home picks for the power pick factor
 # finished_week=26 # select this for 2021
 finished_week=3
 
@@ -979,9 +980,11 @@ with st.expander('Deep Dive on Power Factor'):
 
 
     decile_df_abs_home=power_factor_analysis.groupby(['power_pick'])['power_ranking_success?'].sum().reset_index()
-    st.write('breaks out Home Away')
-    # st.write(decile_df_abs_home)
-    st.altair_chart(alt.Chart(decile_df_abs_home).mark_bar().encode(x='power_pick:N',y='power_ranking_success?'),use_container_width=True)
+    decile_df_abs_home['per_cent']=decile_df_abs_home['power_ranking_success?']/decile_df_abs_home['power_ranking_success?'].sum()
+    st.write('breaks out Power Pick Success by Home / Away')
+    # st.write(decile_df_abs_home.sort_values(by='power_pick',ascending=False).style.format({'per_cent':"{:.0%}"}))
+
+    # st.altair_chart(alt.Chart(decile_df_abs_home).mark_bar().encode(x='power_pick:N',y='power_ranking_success?'),use_container_width=True)
 
     decile_df_abs_home_1=power_factor_analysis.groupby(['Week','power_pick'])['power_ranking_success?'].sum().reset_index()
     decile_df_abs_home_1=power_factor_analysis.groupby(['Week','power_pick']).agg(
@@ -1011,7 +1014,13 @@ with st.expander('Deep Dive on Power Factor'):
     st.write('Below shows the cumulative win/loss by home away games')
     graph(decile_df_abs_home_1,column='cum_sum_home_away')
     st.write('What is the breakdown of power pick by Home / Away')
-    
+    st.write('Total picks by Home / Away')
+    table_count=power_factor_analysis.groupby(['power_pick']).agg(no_games=('power_ranking_success?','count'),result=('power_ranking_success?','sum')).reset_index().sort_values(by='power_pick',ascending=False)\
+        .rename(columns={'no_games':'no._games'})
+    # table_count=power_factor_analysis.groupby(['power_pick'])['power_ranking_success?'].count().reset_index().sort_values(by='power_pick',ascending=False)\
+        # .rename(columns={'power_ranking_success?':'no._games'})
+    table_count['per_cent']=table_count['no._games']/table_count['no._games'].sum()
+    st.write(table_count.set_index('power_pick').style.format({'per_cent':"{:.0%}"}))
     line_cover= alt.Chart(decile_df_abs_home_1).mark_bar().encode(alt.X('Week:O',axis=alt.Axis(title='Week',labelAngle=0)),
     alt.Y('count'),color=alt.Color('power_pick:N'))
     text_cover=line_cover.mark_text(baseline='middle').encode(text=alt.Text('count:N'),color=alt.value('black'))

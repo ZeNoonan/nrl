@@ -9,9 +9,9 @@ st.set_page_config(layout="wide")
 
 # appears as if 2021 was normal year with normal home picks for the power pick factor
 # finished_week=26 # select this for 2021
-finished_week=3
+finished_week=4
 
-# backed Wests Tigers in week 3
+# all backed manly, sydney roosters, melbourne storm
 
 placeholder_1=st.empty()
 placeholder_2=st.empty()

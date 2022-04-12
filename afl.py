@@ -7,9 +7,9 @@ from st_aggrid import AgGrid, GridOptionsBuilder, AgGrid, GridUpdateMode, DataRe
 
 st.set_page_config(layout="wide")
 number_of_teams=18
-#  GSW Sydney backed
+#  Backed 12 April adelaide gold coast gws sydney essendon
 
-finished_week=2
+finished_week=5
 home_advantage=3
 # home_adv_parameter = 3
 

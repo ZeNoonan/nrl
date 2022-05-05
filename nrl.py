@@ -9,9 +9,9 @@ st.set_page_config(layout="wide")
 
 # appears as if 2021 was normal year with normal home picks for the power pick factor
 # finished_week=26 # select this for 2021
-finished_week=7
+finished_week=8
 
-# 25 april only backed Gold Coast, rest of odds not up on Bet365
+# 27 april all backed
 
 placeholder_1=st.empty()
 placeholder_2=st.empty()

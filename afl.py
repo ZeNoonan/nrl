@@ -7,9 +7,9 @@ from st_aggrid import AgGrid, GridOptionsBuilder, AgGrid, GridUpdateMode, DataRe
 
 st.set_page_config(layout="wide")
 number_of_teams=18
-#  Backed 3 may only backed first 2 teams
+#  Backed 17 may 
 
-finished_week=7
+finished_week=9
 home_advantage=3
 # home_adv_parameter = 3
 

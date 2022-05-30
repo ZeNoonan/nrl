@@ -9,7 +9,7 @@ st.set_page_config(layout="wide")
 
 # appears as if 2021 was normal year with normal home picks for the power pick factor
 # finished_week=26 # select this for 2021
-finished_week=11
+finished_week=12
 
 # 23 may all backed
 

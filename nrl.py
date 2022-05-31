@@ -11,7 +11,7 @@ st.set_page_config(layout="wide")
 # finished_week=26 # select this for 2021
 finished_week=12
 
-# 23 may all backed
+# 30 may all backed
 
 placeholder_1=st.empty()
 placeholder_2=st.empty()

@@ -7,9 +7,9 @@ from st_aggrid import AgGrid, GridOptionsBuilder, AgGrid, GridUpdateMode, DataRe
 
 st.set_page_config(layout="wide")
 number_of_teams=18
-#  Backed 23 May all
+#  Backed 30 May geelong north mel hawthorn check for other games
 
-finished_week=10
+finished_week=11
 home_advantage=3
 # home_adv_parameter = 3
 

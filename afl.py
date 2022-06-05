@@ -194,8 +194,8 @@ def games_matrix_workings(first_4):
     full_stack=full_stack.fillna(0)
     full_stack.columns = full_stack.columns.droplevel(0)
     return full_stack
-    
-    full_stack=games_matrix_workings(first_4)
+
+    # full_stack=games_matrix_workings(first_4)
     # st.write('Check sum if True all good', full_stack.sum().sum()==0)
 
 # with st.beta_expander('CORRECT Testing reworking the DataFrame'):

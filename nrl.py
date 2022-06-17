@@ -23,7 +23,7 @@ id_excel=pd.read_excel('C:/Users/Darragh/Documents/Python/nrl/nrl_id.xlsx')
 def csv_save(x):
     x.to_csv('C:/Users/Darragh/Documents/Python/nrl/nrl_data.csv')
     return x
-csv_save(results_excel)
+# csv_save(results_excel)
 
 @st.cache
 def read_csv_data(file):
@@ -1162,14 +1162,14 @@ with st.expander('Checking Performance where Total Factor = 2 or 3:  Additional 
     df_factor_table_penalty=diagnostic(df_factor_penalty)
     df_factor_table_intercept=diagnostic(df_factor_intercept)
     df_factor_table_sin_bin=diagnostic(df_factor_sin_bin)
-
+    # st.write(df_factor_table_1)
     def diagnostic_presentation(df_factor_table_1):
         # sourcery skip: inline-immediately-returned-variable
         cols_to_move=['total_turnover','total_season_cover','power_diagnostic']
         df_factor_table_1 = df_factor_table_1[ cols_to_move + [ col for col in df_factor_table_1 if col not in cols_to_move ] ]
         df_factor_table_1=df_factor_table_1.loc[:,['total_turnover','total_season_cover','power_diagnostic']]
         df_factor_table_1_presentation = df_factor_table_1.style.format("{:.0f}", na_rep='-')
-        # df_factor_table_1_presentation = df_factor_table_1_presentation.format(formatter="{:.1%}", subset=pd.IndexSlice[['% Winning'], :])
+        df_factor_table_1_presentation = df_factor_table_1_presentation.format(formatter="{:.1%}", subset=pd.IndexSlice[['% Winning'], :])
         return df_factor_table_1_presentation
 
     df_factor_table_1_presentation=diagnostic_presentation(df_factor_table_1)

@@ -23,7 +23,7 @@ id_excel=pd.read_excel('C:/Users/Darragh/Documents/Python/nrl/nrl_id.xlsx')
 def csv_save(x):
     x.to_csv('C:/Users/Darragh/Documents/Python/nrl/nrl_data.csv')
     return x
-# csv_save(results_excel)
+csv_save(results_excel)
 
 @st.cache
 def read_csv_data(file):

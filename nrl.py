@@ -23,7 +23,7 @@ id_excel=pd.read_excel('C:/Users/Darragh/Documents/Python/nrl/nrl_id.xlsx')
 def csv_save(x):
     x.to_csv('C:/Users/Darragh/Documents/Python/nrl/nrl_data.csv')
     return x
-csv_save(results_excel)
+# csv_save(results_excel)
 
 @st.cache
 def read_csv_data(file):
@@ -491,7 +491,7 @@ with placeholder_2.expander('Betting Slip Matches'):
     presentation_betting_matches=betting_matches.copy()
 
     # https://towardsdatascience.com/7-reasons-why-you-should-use-the-streamlit-aggrid-component-2d9a2b6e32f0
-    grid_height = st.number_input("Grid height", min_value=400, value=550, step=100)
+    grid_height = st.number_input("Grid height", min_value=400, value=4050, step=100)
     gb = GridOptionsBuilder.from_dataframe(presentation_betting_matches)
     gb.configure_column("Spread", type=["numericColumn","numberColumnFilter","customNumericFormat"], precision=1, aggFunc='sum')
     gb.configure_column("home_power", type=["numericColumn","numberColumnFilter","customNumericFormat"], precision=1, aggFunc='sum')
@@ -1030,9 +1030,18 @@ with st.expander('Deep Dive on Power Factor'):
 
 
 
-    decile_df_abs_spread=power_factor_analysis.groupby(pd.qcut(power_factor_analysis['Spread'].abs(), q=10,duplicates='drop'))['power_ranking_success?'].sum().reset_index()
-    # st.write('breaks out Spread')
-    # st.write(decile_df_abs_spread)
+    decile_df_abs_spread=power_factor_analysis.groupby(pd.qcut(power_factor_analysis['Spread'].abs(), q=8,duplicates='drop'))['power_ranking_success?'].sum().reset_index()
+    
+    st.write('something not right with streamlit when it comes to qcut I think')
+    st.write(pd.Series(pd.qcut(range(5),4)))
+    st.dataframe((power_factor_analysis['Spread'].abs()).reset_index())
+    st.write(pd.qcut(power_factor_analysis['Spread'].abs(), q=8).reset_index())
+    # st.dataframe(pd.qcut(power_factor_analysis['Spread'].abs(), q=8,duplicates='drop').reset_index())
+    # st.write('first part',pd.qcut(power_factor_analysis['Spread'].abs(), q=8,duplicates='drop').reset_index())
+    st.write(power_factor_analysis.groupby(pd.qcut(power_factor_analysis['Spread'].abs(), q=8))['power_ranking_success?'].sum().reset_index())
+    test_cut=(power_factor_analysis.groupby(power_factor_analysis['Spread'].abs())['power_ranking_success?'].sum().reset_index())
+    # st.write(pd.qcut(test_cut,q=8))
+    
     line_cover= alt.Chart(decile_df_abs_spread).mark_bar().encode(alt.X('Spread',axis=alt.Axis(title='Spread',labelAngle=0)),
     alt.Y('power_ranking_success?:Q'))
     text_cover=line_cover.mark_text(baseline='middle').encode(text=alt.Text('power_ranking_success?'),color=alt.value('black'))

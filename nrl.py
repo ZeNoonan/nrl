@@ -9,8 +9,8 @@ st.set_page_config(layout="wide")
 
 # appears as if 2021 was normal year with normal home picks for the power pick factor
 # finished_week=26 # select this for 2021
-finished_week=16
-
+finished_week=15
+st.write('missing odds for 2 games check back')
 # 30 may all backed
 
 placeholder_1=st.empty()
@@ -23,7 +23,7 @@ id_excel=pd.read_excel('C:/Users/Darragh/Documents/Python/nrl/nrl_id.xlsx')
 def csv_save(x):
     x.to_csv('C:/Users/Darragh/Documents/Python/nrl/nrl_data.csv')
     return x
-# csv_save(results_excel)
+csv_save(results_excel)
 
 @st.cache
 def read_csv_data(file):

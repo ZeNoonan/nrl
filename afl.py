@@ -9,7 +9,7 @@ st.set_page_config(layout="wide")
 number_of_teams=18
 #  Backed 30 May geelong north mel hawthorn check for other games
 
-finished_week=17
+finished_week=20
 home_advantage=3
 # home_adv_parameter = 3
 
@@ -399,7 +399,9 @@ with placeholder_2.expander('Betting Slip Matches'):
     st.write('testing sum of betting all result',betting_matches['result_all'].sum())
     # st.write('testing factor')
     # st.write(betting_matches['total_factor'].sum())
-    cols_to_move=['Week','Date','Home Team','Away Team','total_factor','bet_on','result','Spread','Home Points','Away Points','home_power','away_power']
+    betting_matches['my_spread']=betting_matches['away_power']-betting_matches['home_power']
+    betting_matches['spread_diff']=betting_matches['Spread']-betting_matches['my_spread']
+    cols_to_move=['Week','Date','Home Team','Away Team','total_factor','bet_on','result','Spread','my_spread','spread_diff','power_pick','Home Points','Away Points','home_power','away_power']
     cols = cols_to_move + [col for col in betting_matches if col not in cols_to_move]
     betting_matches=betting_matches[cols]
     betting_matches=betting_matches.sort_values(['Week','Date'],ascending=[True,True])
@@ -409,9 +411,11 @@ with placeholder_2.expander('Betting Slip Matches'):
     presentation_betting_matches=betting_matches.copy()
 
     # https://towardsdatascience.com/7-reasons-why-you-should-use-the-streamlit-aggrid-component-2d9a2b6e32f0
-    grid_height = st.number_input("Grid height", min_value=400, value=3550, step=100)
+    grid_height = st.number_input("Grid height", min_value=400, value=5550, step=100)
     gb = GridOptionsBuilder.from_dataframe(presentation_betting_matches)
     gb.configure_column("Spread", type=["numericColumn","numberColumnFilter","customNumericFormat"], precision=1, aggFunc='sum')
+    gb.configure_column("my_spread", type=["numericColumn","numberColumnFilter","customNumericFormat"], precision=1, aggFunc='sum')
+    gb.configure_column("spread_diff", type=["numericColumn","numberColumnFilter","customNumericFormat"], precision=1, aggFunc='sum')
     gb.configure_column("home_power", type=["numericColumn","numberColumnFilter","customNumericFormat"], precision=1, aggFunc='sum')
     gb.configure_column("away_power", type=["numericColumn","numberColumnFilter","customNumericFormat"], precision=1, aggFunc='sum')
     gb.configure_column("Date", type=["dateColumnFilter","customDateTimeFormat"], custom_format_string='dd-MM-yyyy', pivot=True)
@@ -434,6 +438,7 @@ with placeholder_2.expander('Betting Slip Matches'):
     """)
     # # https://github.com/PablocFonseca/streamlit-aggrid/blob/main/st_aggrid/grid_options_builder.py
     gb.configure_column(field="Spread", cellStyle=test_cellsytle_jscode)
+    gb.configure_column(field="my_spread", cellStyle=test_cellsytle_jscode)
     gb.configure_column("home_power", cellStyle=test_cellsytle_jscode)
     gb.configure_column("away_power", cellStyle=test_cellsytle_jscode)
 
@@ -569,6 +574,47 @@ with st.expander('Analysis of Betting Results across 1 to 5 factors'):
     updated_test_chart=chart_power+vline+text
     
     st.altair_chart(updated_test_chart,use_container_width=True)
+
+    chart_power= alt.Chart(normalized_table).mark_bar().encode(alt.X('total_factor:O',axis=alt.Axis(title='factor',labelAngle=0)),
+    alt.Y('winning'),color=alt.Color('result_all',scale=color_scale))
+    overlay = pd.DataFrame({'winning': [0.5]})
+    vline = alt.Chart(overlay).mark_rule(color='black', strokeWidth=2).encode(y='winning:Q')
+    updated_test_chart=chart_power+vline
+    st.altair_chart(updated_test_chart,use_container_width=True)
+
+    reset_data=totals_1.copy()
+    reset_data['result_all']=reset_data['result_all'].replace({'tie':0,'win':1,'lose':-1})
+    # st.write('test',reset_data)
+    reset_data=reset_data.pivot(index='result_all',columns='total_factor',values='winning').fillna(0)
+    # st.write('look',reset_data)
+    reset_data['betting_factor_total']=reset_data[3]+reset_data[4]+reset_data[5]
+    reset_data=reset_data.sort_values(by='betting_factor_total',ascending=False)
+
+    reset_data=reset_data.reset_index()
+    # st.write('reset data', reset_data)
+    reset_data['result_all']=reset_data['result_all'].astype(float).round(1).astype(str)
+    reset_data=reset_data.set_index('result_all')
+    reset_data.loc['Total']=reset_data.sum()
+
+    reset_data.loc['Winning_Bets']=(reset_data.loc['1.0'])
+    reset_data.loc['Losing_Bets']=(reset_data.loc['-1.0'])
+    reset_data.loc['No. of Bets Made'] = reset_data.loc['1.0'] + reset_data.loc['-1.0']
+    reset_data.loc['PL_Bets']=reset_data.loc['Winning_Bets'] - reset_data.loc['Losing_Bets']
+    reset_data=reset_data.apply(pd.to_numeric, downcast='float')
+    reset_data.loc['% Winning'] = ((reset_data.loc['1.0']) /
+    (reset_data.loc['1.0'] + reset_data.loc['-1.0']) ).replace({'<NA>':np.NaN})
+
+    # reset_data.loc['No. of Bets Made'] = reset_data.loc[['1','-1']].sum() 
+    # reset_data=reset_data.apply(pd.to_numeric, downcast='integer')
+    # reset_data.loc['% Winning'] = ((reset_data.loc['1'] / reset_data.loc['No. of Bets Made'])).replace({'<NA>':np.NaN})
+    st.write('This shows the betting result')
+    # https://stackoverflow.com/questions/64428836/use-pandas-style-to-format-index-rows-of-dataframe
+    reset_data = reset_data.style.format("{:.1f}", na_rep='-')
+    reset_data = reset_data.format(formatter="{:.1%}", subset=pd.IndexSlice[['% Winning'], :]).format(formatter="{:.0f}", subset=pd.IndexSlice[['1.0'], :]) \
+        .format(formatter="{:.0f}", subset=pd.IndexSlice[['0.0'], :]) \
+            .format(formatter="{:.0f}", subset=pd.IndexSlice[['-1.0'], :])
+
+    st.write(reset_data)
 
     # st.write('shows the number of games at each factor level')
     # st.write(totals.rename(columns={'winning':'number_of_games'}))

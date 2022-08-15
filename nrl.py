@@ -9,7 +9,7 @@ st.set_page_config(layout="wide")
 
 # appears as if 2021 was normal year with normal home picks for the power pick factor
 # finished_week=26 # select this for 2021
-finished_week=18
+finished_week=21
 # st.write('missing odds for 2 games check back')
 # 30 may all backed
 
@@ -460,15 +460,39 @@ with st.expander('Penalty Factor by Match Graph'):
     # st.write(updated_df)
     # updated_df=penalty_df
 
+with st.expander('Momentum Factor'):
+    
+    updated_df_with_momentum=updated_df.loc[:,['Week','Date','Home ID','Home Team','Away ID', 'Away Team','Spread','Home Points','Away Points',
+        'home_power','away_power','home_cover','away_cover','home_turnover_sign','away_turnover_sign',
+        'home_cover_sign','away_cover_sign','power_pick','home_cover_result','Opening Spread']]
+    # st.write('update', updated_df_with_momentum)
+    updated_df_with_momentum['momentum_pick']=np.where(updated_df_with_momentum['Spread']==updated_df_with_momentum['Opening Spread'],0,np.where(
+        updated_df_with_momentum['Spread']<updated_df_with_momentum['Opening Spread'],1,-1))
+
+
 with placeholder_2.expander('Betting Slip Matches'):
     def run_analysis(updated_df):
-        betting_matches=updated_df.loc[:,['Week','Date','Home ID','Home Team','Away ID', 'Away Team','Spread','Home Points','Away Points',
+        # betting_matches=updated_df.loc[:,['Week','Date','Home ID','Home Team','Away ID', 'Away Team','Spread','Home Points','Away Points',
+        # 'home_power','away_power','home_cover','away_cover','home_turnover_sign','away_turnover_sign',
+        # 'home_cover_sign','away_cover_sign','power_pick','home_cover_result']]
+
+        betting_matches=updated_df_with_momentum.loc[:,['Week','Date','Home ID','Home Team','Away ID', 'Away Team','Spread','Home Points','Away Points',
         'home_power','away_power','home_cover','away_cover','home_turnover_sign','away_turnover_sign',
-        'home_cover_sign','away_cover_sign','power_pick','home_cover_result']]
+        'home_cover_sign','away_cover_sign','power_pick','home_cover_result','momentum_pick','Opening Spread']]
+
+
+
+        # betting_matches['total_factor']=betting_matches['home_turnover_sign']+betting_matches['away_turnover_sign']+betting_matches['home_cover_sign']+\
+        # betting_matches['away_cover_sign']+betting_matches['power_pick']
+
         betting_matches['total_factor']=betting_matches['home_turnover_sign']+betting_matches['away_turnover_sign']+betting_matches['home_cover_sign']+\
-        betting_matches['away_cover_sign']+betting_matches['power_pick']
-        betting_matches['bet_on'] = np.where(betting_matches['total_factor']>2,betting_matches['Home Team'],np.where(betting_matches['total_factor']<-2,betting_matches['Away Team'],''))
-        betting_matches['bet_sign'] = (np.where(betting_matches['total_factor']>2,1,np.where(betting_matches['total_factor']<-2,-1,0)))
+        betting_matches['away_cover_sign']+betting_matches['power_pick']+betting_matches['momentum_pick']
+
+        betting_matches['bet_on'] = np.where(betting_matches['total_factor']>3,betting_matches['Home Team'],np.where(betting_matches['total_factor']<-3,
+        betting_matches['Away Team'],''))
+        
+        betting_matches['bet_sign'] = (np.where(betting_matches['total_factor']>3,1,np.where(betting_matches['total_factor']<-3,-1,0)))
+        
         betting_matches['bet_sign'] = betting_matches['bet_sign'].astype(float)
         betting_matches['home_cover'] = betting_matches['home_cover'].astype(float)
         betting_matches['result']=betting_matches['home_cover_result'] * betting_matches['bet_sign']

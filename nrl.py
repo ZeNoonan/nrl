@@ -9,7 +9,7 @@ st.set_page_config(layout="wide")
 
 # appears as if 2021 was normal year with normal home picks for the power pick factor
 # finished_week=26 # select this for 2021
-finished_week=21
+finished_week=22
 # st.write('missing odds for 2 games check back')
 # 30 may all backed
 

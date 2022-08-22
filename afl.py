@@ -9,7 +9,7 @@ st.set_page_config(layout="wide")
 number_of_teams=18
 #  Backed 30 May geelong north mel hawthorn check for other games
 
-finished_week=20
+finished_week=23
 home_advantage=3
 # home_adv_parameter = 3
 
@@ -359,25 +359,45 @@ with st.expander('Penalty Factor by Match Graph'):
 
     # updated_df=penalty_df
 
+with st.expander('Momentum Factor'):
+    
+    updated_df_with_momentum=updated_df.loc[:,['Week','Date','Home ID','Home Team','Away ID', 'Away Team','Spread','Home Points','Away Points',
+        'home_power','away_power','home_cover','away_cover','home_turnover_sign','away_turnover_sign',
+        'home_cover_sign','away_cover_sign','power_pick','home_cover_result','Opening Spread']]
+    # st.write('update', updated_df_with_momentum)
+    updated_df_with_momentum['momentum_pick']=np.where(updated_df_with_momentum['Spread']==updated_df_with_momentum['Opening Spread'],0,np.where(
+        updated_df_with_momentum['Spread']<updated_df_with_momentum['Opening Spread'],1,-1))
+
+
 with placeholder_2.expander('Betting Slip Matches'):
     # betting_matches=updated_df.loc[:,['Week','Date','Home ID','Home Team','Away ID', 'Away Team','Spread','Home Points','Away Points',
     # 'home_power','away_power','home_cover','away_cover','home_turnover_sign','away_turnover_sign','home_penalty_sign','away_penalty_sign',
     # 'home_cover_sign','away_cover_sign','power_pick','home_cover_result']]
 
-    betting_matches=updated_df.loc[:,['Week','Date','Home ID','Home Team','Away ID', 'Away Team','Spread','Home Points','Away Points',
+    # betting_matches=updated_df.loc[:,['Week','Date','Home ID','Home Team','Away ID', 'Away Team','Spread','Home Points','Away Points',
+    # 'home_power','away_power','home_cover','away_cover','home_turnover_sign','away_turnover_sign',
+    # 'home_cover_sign','away_cover_sign','power_pick','home_cover_result']]
+
+    betting_matches=updated_df_with_momentum.loc[:,['Week','Date','Home ID','Home Team','Away ID', 'Away Team','Spread','Home Points','Away Points',
     'home_power','away_power','home_cover','away_cover','home_turnover_sign','away_turnover_sign',
-    'home_cover_sign','away_cover_sign','power_pick','home_cover_result']]
+    'home_cover_sign','away_cover_sign','power_pick','home_cover_result','momentum_pick','Opening Spread']]
+
+
+    # betting_matches['total_factor']=betting_matches['home_turnover_sign']+betting_matches['away_turnover_sign']+betting_matches['home_cover_sign']+\
+    # betting_matches['away_cover_sign']+betting_matches['power_pick']
 
     betting_matches['total_factor']=betting_matches['home_turnover_sign']+betting_matches['away_turnover_sign']+betting_matches['home_cover_sign']+\
-    betting_matches['away_cover_sign']+betting_matches['power_pick']
+    betting_matches['away_cover_sign']+betting_matches['power_pick']+betting_matches['momentum_pick']
+
 
     # betting_matches['total_factor_penalty']=betting_matches['home_penalty_sign']+betting_matches['away_penalty_sign']+betting_matches['home_cover_sign']+\
     # betting_matches['away_cover_sign']+betting_matches['power_pick']
 
-    betting_matches['bet_on'] = np.where(betting_matches['total_factor']>2,betting_matches['Home Team'],np.where(betting_matches['total_factor']<-2,betting_matches['Away Team'],''))
+    betting_matches['bet_on'] = np.where(betting_matches['total_factor']>3,betting_matches['Home Team'],
+    np.where(betting_matches['total_factor']<-3,betting_matches['Away Team'],''))
     # betting_matches['bet_on_penalty'] = np.where(betting_matches['total_factor_penalty']>2,betting_matches['Home Team'],np.where(betting_matches['total_factor_penalty']<-2,betting_matches['Away Team'],''))
 
-    betting_matches['bet_sign'] = (np.where(betting_matches['total_factor']>2,1,np.where(betting_matches['total_factor']<-2,-1,0)))
+    betting_matches['bet_sign'] = (np.where(betting_matches['total_factor']>3,1,np.where(betting_matches['total_factor']<-3,-1,0)))
     # betting_matches['bet_sign_penalty'] = (np.where(betting_matches['total_factor_penalty']>2,1,np.where(betting_matches['total_factor_penalty']<-2,-1,0)))
     
     betting_matches['bet_sign'] = betting_matches['bet_sign'].astype(float)

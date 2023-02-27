@@ -6,24 +6,44 @@ import datetime as dt
 from st_aggrid import AgGrid, GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode, JsCode
 
 st.set_page_config(layout="wide")
-
+season_picker = st.selectbox("Select a season to run",('season_2023','season_2022'),index=0)
 # appears as if 2021 was normal year with normal home picks for the power pick factor
 # finished_week=26 # select this for 2021
-finished_week=24
-# st.write('missing odds for 2 games check back')
-# 30 may all backed
+finished_week=4
 
 placeholder_1=st.empty()
 placeholder_2=st.empty()
 
+season_list={'season_2023': {
+    "odds_file": "C:/Users/Darragh/Documents/Python/nrl/nrl_2023.csv",
+    "scores_file": "C:/Users/Darragh/Documents/Python/nrl/scores_2022_2023.csv",
+    "team_id": "C:/Users/Darragh/Documents/Python/nrl/nrl_id_2023.csv",
+    "season_year": "2023",
+    "prior_year_file": "C:/Users/Darragh/Documents/Python/nrl/nrl_2022.csv"},
+'season_2022': {
+    "odds_file": "C:/Users/Darragh/Documents/Python/rugby/nrl_2022.csv",
+    "scores_file": "C:/Users/Darragh/Documents/Python/premier_league/scores_2022_2023.csv",
+    "team_id": "C:/Users/Darragh/Documents/Python/rugby/nrl_id_2022.csv",
+    "season_year": "2022",
+    "prior_year_file": "C:/Users/Darragh/Documents/Python/nrl/nrl_2021.csv"}}
 
-results_excel=pd.read_excel('C:/Users/Darragh/Documents/Python/nrl/nrl.xlsx')
-id_excel=pd.read_excel('C:/Users/Darragh/Documents/Python/nrl/nrl_id.xlsx')
+year=season_list[season_picker]['season_year']
+# results_excel=pd.read_excel('C:/Users/Darragh/Documents/Python/rugby/super_rugby.xlsx')
+results_excel = pd.read_excel(f'C:/Users/Darragh/Documents/Python/nrl/nrl_{year}.xlsx',parse_dates=['Date']) # 2023
+results_excel.to_csv(f'C:/Users/Darragh/Documents/Python/nrl/nrl_{year}.csv')
+data = pd.read_csv(season_list[season_picker]['odds_file'],parse_dates=['Date'])
+# pd.read_excel('C:/Users/Darragh/Documents/Python/nrl/nrl_id_2023.xlsx').to_csv("C:/Users/Darragh/Documents/Python/nrl/nrl_id_2023.csv")
+team_names_id=pd.read_csv(season_list[season_picker]['team_id'])
+number_of_teams = team_names_id['ID'].nunique()
+st.write('number of teams', number_of_teams)
 
-def csv_save(x):
-    x.to_csv('C:/Users/Darragh/Documents/Python/nrl/nrl_data.csv')
-    return x
-csv_save(results_excel)
+# results_excel=pd.read_excel('C:/Users/Darragh/Documents/Python/nrl/nrl.xlsx')
+# id_excel=pd.read_excel('C:/Users/Darragh/Documents/Python/nrl/nrl_id.xlsx')
+
+# def csv_save(x):
+#     x.to_csv('C:/Users/Darragh/Documents/Python/nrl/nrl_data.csv')
+#     return x
+# csv_save(results_excel)
 
 @st.cache
 def read_csv_data(file):
@@ -37,19 +57,19 @@ def read_csv_data_date(file):
 
 
 # url = read_csv_data('https://raw.githubusercontent.com/ZeNoonan/nrl/main/nrl_data.csv').copy()
-url = 'https://raw.githubusercontent.com/ZeNoonan/nrl/main/nrl_data.csv'
+# url = 'https://raw.githubusercontent.com/ZeNoonan/nrl/main/nrl_data.csv'
 # https://www.aussportsbetting.com/data/historical-nfl-results-and-odds-data/
 # team_names_id = read_csv_data('https://raw.githubusercontent.com/ZeNoonan/nrl/main/nrl_team_id.csv').copy()
 # team_names_id = (read_csv_data('C:/Users/Darragh/Documents/Python/nrl/nrl_team_id.csv')).drop(['Unnamed: 0'],axis=1).copy()
-team_names_id = id_excel
+# team_names_id = id_excel
 # st.write(team_names_id)
 # st.write(pd.read_csv(url))
 # data=pd.read_csv(url,parse_dates=['Date'])
 
-local='C:/Users/Darragh/Documents/Python/nrl/nrl_data.csv'
+# local='C:/Users/Darragh/Documents/Python/nrl/nrl_data.csv'
 
 # data=pd.read_csv(local,parse_dates=['Date'])
-data=(read_csv_data_date(local)).copy()
+# data=(read_csv_data_date(local)).copy()
 # data=pd.read_csv(url,parse_dates=['Date'])
 # st.write(data)
 
@@ -60,15 +80,15 @@ data['day']=data['Date'].dt.day
 data=data.drop(['Date','Unnamed: 0'],axis=1)
 data['Date']=pd.to_datetime(data[['year','month','day']])
 
-def select_year(data,week_key='Week'):
-    data[week_key] = data[week_key].replace({'Finals':26})
-    data[week_key]=pd.to_numeric(data[week_key])
-    data=data.drop('Week',axis=1) # TAKE THIS OUT IF YOU WANT TO RUN 2021
-    data=data.rename(columns={week_key:'Week'})
-    data=data.dropna(subset=['Week']) # Uncheck this for 2022
-    return data
+# def select_year(data,week_key='Week'):
+#     data[week_key] = data[week_key].replace({'Finals':26})
+#     data[week_key]=pd.to_numeric(data[week_key])
+#     data=data.drop('Week',axis=1) # TAKE THIS OUT IF YOU WANT TO RUN 2021
+#     data=data.rename(columns={week_key:'Week'})
+#     data=data.dropna(subset=['Week']) # Uncheck this for 2022
+#     return data
 
-data=select_year(data,week_key='Week_2022')
+# data=select_year(data,week_key='Week_2022')
 # data=select_year(data,week_key='Week') # select this for 2021
 
 
@@ -307,18 +327,19 @@ games_df=matrix_df_1.copy()
 
 first=list(range(-3,finished_week))
 last=list(range(0,finished_week+1))
+# st.write('first section',games_df[games_df['Week'].between(list(range(-3,finished_week)),last)])
 
 for first,last in zip(first,last):
     first_section=games_df[games_df['Week'].between(first,last)]
     full_game_matrix=games_matrix_workings(first_section)
-    adjusted_matrix=full_game_matrix.loc[0:14,0:14]
+    adjusted_matrix=full_game_matrix.loc[0:(number_of_teams-2),0:(number_of_teams-2)]
     df_inv = pd.DataFrame(np.linalg.pinv(adjusted_matrix.values), adjusted_matrix.columns, adjusted_matrix.index)
     power_df_week=power_df[power_df['Week']==last].drop_duplicates(subset=['ID'],keep='last').set_index('ID')\
-    .drop('Week',axis=1).rename(columns={'adj_spread':0}).loc[:14,:]
+    .drop('Week',axis=1).rename(columns={'adj_spread':0}).loc[:(number_of_teams-2),:]
     result = df_inv.dot(pd.DataFrame(power_df_week))
     result.columns=['power']
-    avg=(result['power'].sum())/16
-    result['avg_pwr_rank']=(result['power'].sum())/16
+    avg=(result['power'].sum())/(number_of_teams)
+    result['avg_pwr_rank']=(result['power'].sum())/(number_of_teams)
     result['final_power']=result['avg_pwr_rank']-result['power']
     df_pwr=pd.DataFrame(columns=['final_power'],data=[avg])
     result=pd.concat([result,df_pwr],ignore_index=True)

@@ -6,26 +6,49 @@ import datetime as dt
 from st_aggrid import AgGrid, GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode, JsCode
 
 st.set_page_config(layout="wide")
+season_picker = st.selectbox("Select a season to run",('season_2023','season_2022'),index=0)
 number_of_teams=18
-#  Backed 30 May geelong north mel hawthorn check for other games
 
-finished_week=24
+finished_week=4
 home_advantage=3
 # home_adv_parameter = 3
 
 placeholder_1=st.empty()
 placeholder_2=st.empty()
 
-# url='C:/Users/Darragh/Documents/Python/rugby/rugby.xlsx'
-# url = 'https://raw.githubusercontent.com/ZeNoonan/rugby/main/rugby_results.csv'
+season_list={'season_2023': {
+    "odds_file": "C:/Users/Darragh/Documents/Python/nrl/afl_2023.csv",
+    "scores_file": "C:/Users/Darragh/Documents/Python/nrl/scores_2022_2023.csv",
+    "team_id": "C:/Users/Darragh/Documents/Python/nrl/afl_id.csv",
+    "season_year": "2023",
+    "prior_year_file": "C:/Users/Darragh/Documents/Python/nrl/afl_2022.csv"},
+'season_2022': {
+    "odds_file": "C:/Users/Darragh/Documents/Python/rugby/afl_2022.csv",
+    "scores_file": "C:/Users/Darragh/Documents/Python/premier_league/scores_2022_2023.csv",
+    "team_id": "C:/Users/Darragh/Documents/Python/rugby/afl_id.csv",
+    "season_year": "2022",
+    "prior_year_file": "C:/Users/Darragh/Documents/Python/nrl/afl_2021.csv"}}
 
-results_excel=pd.read_excel('C:/Users/Darragh/Documents/Python/nrl/afl.xlsx')
-def csv_save(x):
-    x.to_csv('C:/Users/Darragh/Documents/Python/nrl/afl.csv')
-    return x
-csv_save(results_excel)
+year=season_list[season_picker]['season_year']
+# pd.read_excel('C:/Users/Darragh/Documents/Python/nrl/afl_id.xlsx').to_csv("C:/Users/Darragh/Documents/Python/nrl/afl_id.csv")
+# pd.read_excel('C:/Users/Darragh/Documents/Python/nrl/afl_2022.xlsx').to_csv("C:/Users/Darragh/Documents/Python/nrl/afl_2022.csv")
+# pd.read_excel('C:/Users/Darragh/Documents/Python/nrl/afl_2023.xlsx').to_csv("C:/Users/Darragh/Documents/Python/nrl/afl_2023.csv")
+# results_excel=pd.read_excel('C:/Users/Darragh/Documents/Python/rugby/super_rugby.xlsx')
+results_excel = pd.read_excel(f'C:/Users/Darragh/Documents/Python/nrl/afl_{year}.xlsx',parse_dates=['Date']) # 2023
+results_excel.to_csv(f'C:/Users/Darragh/Documents/Python/nrl/afl_{year}.csv')
+data = pd.read_csv(season_list[season_picker]['odds_file'],parse_dates=['Date'])
 
-data=pd.read_csv('C:/Users/Darragh/Documents/Python/nrl/afl.csv',parse_dates=['Date'])
+team_names_id=pd.read_csv(season_list[season_picker]['team_id'])
+number_of_teams = team_names_id['ID'].nunique()
+# st.write('number of teams', number_of_teams)
+
+# results_excel=pd.read_excel('C:/Users/Darragh/Documents/Python/nrl/afl.xlsx')
+# def csv_save(x):
+#     x.to_csv('C:/Users/Darragh/Documents/Python/nrl/afl.csv')
+#     return x
+# csv_save(results_excel)
+
+# data=pd.read_csv('C:/Users/Darragh/Documents/Python/nrl/afl.csv',parse_dates=['Date'])
 # data=pd.read_csv(url,parse_dates=['Date'])
 
 # data['Date']=pd.to_datetime(data['Date'],errors='coerce')
@@ -39,7 +62,7 @@ data['Date']=pd.to_datetime(data[['year','month','day']])
 # data=pd.read_excel(url,sheet_name='data')
 # st.write(data)
 
-team_names_id=pd.read_excel('C:/Users/Darragh/Documents/Python/nrl/afl_id.xlsx',sheet_name='ID')
+# team_names_id=pd.read_excel('C:/Users/Darragh/Documents/Python/nrl/afl_id.xlsx',sheet_name='ID')
 # team_names_id=pd.read_csv('https://raw.githubusercontent.com/ZeNoonan/rugby/main/rugby_id.csv')
 
 
@@ -393,11 +416,11 @@ with placeholder_2.expander('Betting Slip Matches'):
     # betting_matches['total_factor_penalty']=betting_matches['home_penalty_sign']+betting_matches['away_penalty_sign']+betting_matches['home_cover_sign']+\
     # betting_matches['away_cover_sign']+betting_matches['power_pick']
 
-    betting_matches['bet_on'] = np.where(betting_matches['total_factor']>3,betting_matches['Home Team'],
-    np.where(betting_matches['total_factor']<-3,betting_matches['Away Team'],''))
+    betting_matches['bet_on'] = np.where(betting_matches['total_factor']>2,betting_matches['Home Team'],
+    np.where(betting_matches['total_factor']<-2,betting_matches['Away Team'],''))
     # betting_matches['bet_on_penalty'] = np.where(betting_matches['total_factor_penalty']>2,betting_matches['Home Team'],np.where(betting_matches['total_factor_penalty']<-2,betting_matches['Away Team'],''))
 
-    betting_matches['bet_sign'] = (np.where(betting_matches['total_factor']>3,1,np.where(betting_matches['total_factor']<-3,-1,0)))
+    betting_matches['bet_sign'] = (np.where(betting_matches['total_factor']>3,1,np.where(betting_matches['total_factor']<-2,-1,0)))
     # betting_matches['bet_sign_penalty'] = (np.where(betting_matches['total_factor_penalty']>2,1,np.where(betting_matches['total_factor_penalty']<-2,-1,0)))
     
     betting_matches['bet_sign'] = betting_matches['bet_sign'].astype(float)

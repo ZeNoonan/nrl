@@ -35,7 +35,7 @@ data = pd.read_csv(season_list[season_picker]['odds_file'],parse_dates=['Date'])
 # pd.read_excel('C:/Users/Darragh/Documents/Python/nrl/nrl_id_2023.xlsx').to_csv("C:/Users/Darragh/Documents/Python/nrl/nrl_id_2023.csv")
 team_names_id=pd.read_csv(season_list[season_picker]['team_id'])
 number_of_teams = team_names_id['ID'].nunique()
-st.write('number of teams', number_of_teams)
+# st.write('number of teams', number_of_teams)
 
 # results_excel=pd.read_excel('C:/Users/Darragh/Documents/Python/nrl/nrl.xlsx')
 # id_excel=pd.read_excel('C:/Users/Darragh/Documents/Python/nrl/nrl_id.xlsx')
@@ -878,7 +878,9 @@ with st.expander('Analysis of Betting Results across 1 to 5 factors'):
     # st.write('test',reset_data)
     reset_data=reset_data.pivot(index='result_all',columns='total_factor',values='winning').fillna(0)
     # st.write('look',reset_data)
-    reset_data['betting_factor_total']=reset_data[3]+reset_data[4]+reset_data[5]
+    dfBool=pd.Series(reset_data.columns.isin([3,4,5,6,7,8]) )
+    reset_data['betting_factor_total']=reset_data[reset_data.columns[dfBool]].sum(axis=1)
+    # reset_data['betting_factor_total']=reset_data[3]+reset_data[4]+reset_data[5]
     reset_data=reset_data.sort_values(by='betting_factor_total',ascending=False)
 
     reset_data=reset_data.reset_index()

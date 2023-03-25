@@ -630,7 +630,9 @@ with st.expander('Analysis of Betting Results across 1 to 5 factors'):
     # st.write('test',reset_data)
     reset_data=reset_data.pivot(index='result_all',columns='total_factor',values='winning').fillna(0)
     # st.write('look',reset_data)
-    reset_data['betting_factor_total']=reset_data[3]+reset_data[4]+reset_data[5]
+    dfBool=pd.Series(reset_data.columns.isin([3,4,5,6,7,8]) )
+    reset_data['betting_factor_total']=reset_data[reset_data.columns[dfBool]].sum(axis=1)
+    # reset_data['betting_factor_total']=reset_data[3]+reset_data[4]+reset_data[5]
     reset_data=reset_data.sort_values(by='betting_factor_total',ascending=False)
 
     reset_data=reset_data.reset_index()
@@ -768,7 +770,9 @@ with st.expander('Analysis of Factors'):
     # reset_data['result_all']=reset_data['result_all'].replace({'tie':0,'win':1,'lose':-1})
     reset_data['result_all']=reset_data['result_all'].replace({'tie':'0','win':'1','lose':'-1'})
     reset_data=reset_data.pivot(index='result_all',columns='total_factor',values='winning').fillna(0)
-    reset_data['betting_factor_total']=reset_data[3]+reset_data[4]+reset_data[5]
+    dfBool=pd.Series(reset_data.columns.isin([3,4,5,6,7,8]) )
+    reset_data['betting_factor_total']=reset_data[reset_data.columns[dfBool]].sum(axis=1)
+    # reset_data['betting_factor_total']=reset_data[3]+reset_data[4]+reset_data[5]
     reset_data=reset_data.sort_values(by='betting_factor_total',ascending=False)
     # st.write('working???',reset_data)
     reset_data.loc['Total']=reset_data.sum()

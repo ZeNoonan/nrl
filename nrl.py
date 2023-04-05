@@ -9,7 +9,7 @@ st.set_page_config(layout="wide")
 season_picker = st.selectbox("Select a season to run",('season_2023','season_2022'),index=0)
 # appears as if 2021 was normal year with normal home picks for the power pick factor
 # finished_week=26 # select this for 2021
-finished_week=4
+finished_week=5
 
 placeholder_1=st.empty()
 placeholder_2=st.empty()
@@ -524,7 +524,7 @@ with placeholder_2.expander('Betting Slip Matches'):
         # st.write('testing sum of betting all result',betting_matches['result_all'].sum())
         betting_matches['my_spread']=betting_matches['away_power']-betting_matches['home_power']
         betting_matches['spread_diff']=betting_matches['Spread']-betting_matches['my_spread']
-        cols_to_move=['Week','Date','Home Team','Away Team','total_factor','bet_on','result','Spread','my_spread','spread_diff','power_pick','Home Points','Away Points','home_power','away_power']
+        cols_to_move=['Week','Date','Home Team','Away Team','total_factor','bet_on','result','Spread','Home Points','Away Points','my_spread','spread_diff','power_pick','home_power','away_power']
         cols = cols_to_move + [col for col in betting_matches if col not in cols_to_move]
         betting_matches=betting_matches[cols]
         betting_matches=betting_matches.sort_values(['Week','Date'],ascending=[True,True])

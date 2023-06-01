@@ -9,7 +9,7 @@ st.set_page_config(layout="wide")
 season_picker = st.selectbox("Select a season to run",('season_2023','season_2022'),index=0)
 # appears as if 2021 was normal year with normal home picks for the power pick factor
 # finished_week=26 # select this for 2021
-finished_week=12
+finished_week=12 # be careful with this as if you go one week more it throws up an error
 
 placeholder_1=st.empty()
 placeholder_2=st.empty()
@@ -360,20 +360,25 @@ updated_df['spread_working']=updated_df['home_power']-updated_df['away_power']+u
 updated_df['power_pick'] = np.where(updated_df['spread_working'] > 0, 1,
 np.where(updated_df['spread_working'] < 0,-1,0))
 # updated_df_1=updated_df.copy()
-# st.write(updated_df)
+# st.write('any duplicates in here',updated_df)
 
 with st.expander('Season to Date Cover Factor by Team'):
     st.write('Positive number means the number of games to date that you have covered the spread; in other words teams with a positive number have beaten expectations')
     st.write('Negative number means the number of games to date that you have not covered the spread; in other words teams with a negative number have performed below expectations')
     st.write('blanks in graph are where the team got a bye week')
     stdc_home=spread_3.rename(columns={'ID':'Home ID'})
+    st.write('stdc_home', stdc_home.sort_values(by=['Week','Home ID']))
     stdc_home['cover_sign']=-stdc_home['cover_sign']
     stdc_away=spread_3.rename(columns={'ID':'Away ID'})
     updated_df=updated_df.drop(['away_cover'],axis=1)
     updated_df=updated_df.rename(columns={'home_cover':'home_cover_result'})
+    # st.write('any duplicates in here nope', updated_df)
     updated_df=updated_df.merge(stdc_home,on=['Date','Week','Home ID'],how='left').rename(columns={'cover':'home_cover','cover_sign':'home_cover_sign'})
+    st.write('any duplicates in here nope', updated_df)
+    st.write('stdc_away', stdc_away.sort_values(by=['Week','Away ID']))
     updated_df=pd.merge(updated_df,stdc_away,on=['Date','Week','Away ID'],how='left').rename(columns={'cover':'away_cover','cover_sign':'away_cover_sign'})
     updated_df_1=updated_df.copy()
+    # st.write('any duplicates in here', updated_df)
     
     stdc_df=pd.merge(spread_3,team_names_id,on='ID').rename(columns={'Home Team':'Team'})
     stdc_df=stdc_df.loc[:,['Week','Team','cover']].copy()

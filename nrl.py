@@ -9,7 +9,7 @@ st.set_page_config(layout="wide")
 season_picker = st.selectbox("Select a season to run",('season_2023','season_2022'),index=0)
 # appears as if 2021 was normal year with normal home picks for the power pick factor
 # finished_week=26 # select this for 2021
-finished_week=21 # be careful with this as if you go one week more it throws up an error
+finished_week=22 # be careful with this as if you go one week more it throws up an error
 # update
 placeholder_1=st.empty()
 placeholder_2=st.empty()

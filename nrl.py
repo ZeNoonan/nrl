@@ -218,7 +218,7 @@ def season_cover_2(season_cover_df,column_name):
     # https://stackoverflow.com/questions/54993050/pandas-groupby-shift-and-cumulative-sum
     # season_cover_df[column_name] = season_cover_df.groupby (['ID'])[column_name].transform(lambda x: x.cumsum().shift())
     # THE ABOVE DIDN'T WORK IN 2020 PRO FOOTBALL BUT DID WORK IN 2019 DO NOT DELETE FOR INFO PURPOSES
-    season_cover_df[column_name] = season_cover_df.groupby (['ID'])[column_name].apply(lambda x: x.cumsum().shift())
+    season_cover_df[column_name] = season_cover_df.groupby (['ID'],group_keys=False)[column_name].apply(lambda x: x.cumsum().shift())
     season_cover_df=season_cover_df.reset_index().sort_values(by=['Week','Date','ID'],ascending=True).drop('index',axis=1)
     # Be careful with this if you want full season, season to date cover, for week 17, it is season to date up to week 16
     # if you want full season, you have to go up to week 18 to get the full 17 weeks, just if you want to do analysis on season covers
